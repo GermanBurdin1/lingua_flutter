@@ -7,7 +7,14 @@ import '../widgets/voice_recorder.dart';
 import '../widgets/cosmic_background.dart';
 
 class VocabularyScreen extends StatefulWidget {
-  const VocabularyScreen({super.key});
+  final String? galaxyName;
+  final String? subtopicName;
+
+  const VocabularyScreen({
+    super.key,
+    this.galaxyName,
+    this.subtopicName,
+  });
 
   @override
   State<VocabularyScreen> createState() => _VocabularyScreenState();
@@ -20,7 +27,10 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
-      context.read<VocabularyProvider>().fetchWords();
+      context.read<VocabularyProvider>().fetchWords(
+        galaxy: widget.galaxyName,
+        subtopic: widget.subtopicName,
+      );
     });
   }
 
@@ -109,6 +119,8 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                       word: word,
                       sourceLang: 'fr',
                       targetLang: 'ru',
+                      galaxy: widget.galaxyName ?? '',
+                      subtopic: widget.subtopicName ?? '',
                     );
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -138,7 +150,11 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: const Text('VOCABULAIRE'),
+        title: Text(
+          widget.subtopicName != null
+              ? widget.subtopicName!.toUpperCase()
+              : 'VOCABULAIRE',
+        ),
       ),
       body: CosmicBackground(
         isDark: themeProvider.isDarkMode,

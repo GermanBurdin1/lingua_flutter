@@ -6,6 +6,8 @@ import 'providers/auth_provider.dart';
 import 'providers/vocabulary_provider.dart';
 import 'providers/theme_provider.dart';
 import 'screens/main_screen.dart';
+import 'screens/galaxy_selection_screen.dart';
+import 'screens/subtopic_selection_screen.dart';
 import 'screens/vocabulary_screen.dart';
 import 'screens/word_detail_screen.dart';
 
@@ -48,8 +50,26 @@ final GoRouter _router = GoRouter(
       builder: (context, state) => const MainScreen(),
     ),
     GoRoute(
-      path: '/vocabulary',
-      builder: (context, state) => const VocabularyScreen(),
+      path: '/galaxies',
+      builder: (context, state) => const GalaxySelectionScreen(),
+    ),
+    GoRoute(
+      path: '/galaxy/:name',
+      builder: (context, state) {
+        final galaxyName = Uri.decodeComponent(state.pathParameters['name']!);
+        return SubtopicSelectionScreen(galaxyName: galaxyName);
+      },
+    ),
+    GoRoute(
+      path: '/vocabulary/:galaxy/:subtopic',
+      builder: (context, state) {
+        final galaxy = Uri.decodeComponent(state.pathParameters['galaxy']!);
+        final subtopic = Uri.decodeComponent(state.pathParameters['subtopic']!);
+        return VocabularyScreen(
+          galaxyName: galaxy,
+          subtopicName: subtopic,
+        );
+      },
     ),
     GoRoute(
       path: '/word/:id',

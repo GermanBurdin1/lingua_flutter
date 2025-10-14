@@ -8,6 +8,7 @@ Application mobile d'apprentissage des langues avec design cosmique néon et com
 - 🌓 **Mode Sombre/Clair** - Basculement entre thèmes cosmiques
 - 🎤 **Commande Vocale** - Enregistrement et reconnaissance vocale (via Groq API)
 - 📚 **Gestion du Vocabulaire** - Ajout, affichage et gestion des mots
+- 🌌 **Navigation par Galaxies** - Organisation par thèmes (galaxies) et sous-thèmes (planètes)
 - 🇫🇷 **Interface en Français** - Entièrement traduite
 - 🚀 **Animations Fluides** - Transitions et effets visuels
 
@@ -125,26 +126,45 @@ Obtenez une clé gratuite: https://console.groq.com/keys
 
 ```
 lib/
-├── main.dart                     # Point d'entrée
-├── models/                       # Modèles de données
-│   └── word.dart
-├── providers/                    # State management
+├── main.dart                         # Point d'entrée
+├── models/                           # Modèles de données
+│   ├── word.dart
+│   └── galaxy.dart                   # ⭐ Modèle galaxies/sous-thèmes
+├── providers/                        # State management
 │   ├── auth_provider.dart
 │   ├── vocabulary_provider.dart
-│   └── theme_provider.dart       # ⭐ Gestion des thèmes
-├── screens/                      # Écrans
-│   ├── main_screen.dart          # Écran principal
-│   ├── vocabulary_screen.dart    # Vocabulaire
-│   └── word_detail_screen.dart   # Détails du mot
-├── services/                     # Services API
+│   └── theme_provider.dart           # Gestion des thèmes
+├── screens/                          # Écrans
+│   ├── main_screen.dart              # Écran principal
+│   ├── galaxy_selection_screen.dart  # ⭐ Sélection galaxies
+│   ├── subtopic_selection_screen.dart# ⭐ Sélection sous-thèmes
+│   ├── vocabulary_screen.dart        # Vocabulaire
+│   └── word_detail_screen.dart       # Détails du mot
+├── services/                         # Services API
 │   └── api_service.dart
-└── widgets/                      # Widgets réutilisables
-    ├── voice_recorder.dart       # Enregistrement vocal
-    └── cosmic_background.dart    # ⭐ Fond cosmique
+└── widgets/                          # Widgets réutilisables
+    ├── voice_recorder.dart           # Enregistrement vocal
+    └── cosmic_background.dart        # Fond cosmique
 ```
+
+## 🌌 Navigation par Galaxies
+
+L'application utilise un système de navigation hiérarchique:
+
+1. **Écran Principal** → Choisir "Vocabulaire"
+2. **Galaxies** (6 thèmes principaux):
+   - 🎓 Galaxie Érudition (Histoire, Science, Art, Philosophie, Technologies, Culture)
+   - 👥 Galaxie Relations (Famille, Amis, Travail, Réseaux sociaux, Communication)
+   - 💼 Galaxie Carrière (Emplois, Compétences, CV, Entretien)
+   - 🏠 Galaxie Objets (Meubles, Technologie, Outils, Vêtements, Bijoux, Jouets)
+   - 🏥 Galaxie Santé (Maladies, Traitement, Prévention, Mode de vie sain, Pharmacies)
+   - 🎉 Galaxie Événements (Fêtes, Catastrophes, Sport, Politique)
+3. **Sous-thèmes** (planètes) → Cliquez pour voir les mots
+4. **Liste de mots** → Avec commande vocale et ajout manuel
 
 ## 🎯 À Faire
 
+- [x] Organisation par galaxies et sous-thèmes
 - [ ] Authentification complète
 - [ ] Écran des traductions
 - [ ] Écran de grammaire
