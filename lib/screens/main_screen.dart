@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
+import '../providers/auth_provider.dart';
 import '../widgets/cosmic_background.dart';
 
 class MainScreen extends StatelessWidget {
@@ -9,7 +10,10 @@ class MainScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('🏠 [MainScreen] Building MainScreen widget');
     final themeProvider = context.watch<ThemeProvider>();
+    final authProvider = context.watch<AuthProvider>();
+    print('🏠 [MainScreen] Current user: ${authProvider.currentUser?.email}');
     
     return Scaffold(
       extendBodyBehindAppBar: true,

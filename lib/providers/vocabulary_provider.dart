@@ -5,12 +5,6 @@ import '../services/api_service.dart';
 class VocabularyProvider with ChangeNotifier {
   final ApiService _apiService = ApiService();
   
-  VocabularyProvider() {
-    // TODO: Замените на реальный токен из вашего Angular приложения
-    // Откройте Angular app → DevTools → Application → Local Storage → access_token
-    // _apiService.setToken('ВАШ_ТОКЕН_СЮДА');
-  }
-  
   List<Word> _words = [];
   bool _isLoading = false;
   String? _error;
