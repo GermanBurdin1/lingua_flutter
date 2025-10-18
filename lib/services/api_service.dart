@@ -8,6 +8,8 @@ class ApiService {
   // Используем API Gateway для всех запросов
   static const String apiGatewayUrl = 'http://localhost:3011';
   static const String authBaseUrl = '$apiGatewayUrl/auth';
+  
+  // Обращаемся через API Gateway
   static const String vocabularyBaseUrl = '$apiGatewayUrl/vocabulary';
   
   String? _accessToken;
@@ -167,6 +169,10 @@ class ApiService {
   Future<List<Word>> getLexicon({String? galaxy, String? subtopic}) async {
     await loadTokens();
     
+    print('📚 getLexicon called');
+    print('📚 galaxy: $galaxy, subtopic: $subtopic');
+    print('📚 access_token present: ${_accessToken != null}');
+    
     final queryParams = <String, String>{};
     if (galaxy != null) queryParams['galaxy'] = galaxy;
     if (subtopic != null) queryParams['subtopic'] = subtopic;
@@ -174,10 +180,35 @@ class ApiService {
     final uri = Uri.parse('$vocabularyBaseUrl/lexicon')
         .replace(queryParameters: queryParams);
     
+    print('📚 Request URL: $uri');
+    print('📚 Headers: ${_headers.keys.join(", ")}');
+    
     final response = await http.get(uri, headers: _headers);
     
+    print('📚 Response status: ${response.statusCode}');
+    
     if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body)['data'];
+      print('📚 Response body (first 500 chars): ${response.body.substring(0, response.body.length > 500 ? 500 : response.body.length)}');
+      final responseData = json.decode(response.body);
+      print('📚 Response structure: ${responseData.runtimeType}');
+      
+      // Сервер может вернуть либо массив напрямую, либо объект с ключом "data"
+      List<dynamic> data;
+      if (responseData is List) {
+        print('📚 Response is List directly');
+        data = responseData;
+      } else if (responseData is Map && responseData.containsKey('data')) {
+        print('📚 Response is Map with "data" key');
+        data = responseData['data'];
+      } else {
+        print('❌ Unexpected response structure');
+        throw Exception('Unexpected response structure');
+      }
+      
+      print('📚 Number of words: ${data.length}');
+      if (data.isNotEmpty) {
+        print('📚 First word structure: ${data[0]}');
+      }
       return data.map((json) => Word.fromJson(json)).toList();
     } else if (response.statusCode == 401) {
       await refreshAccessToken();

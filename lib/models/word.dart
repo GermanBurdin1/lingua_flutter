@@ -21,14 +21,14 @@ class Word {
 
   factory Word.fromJson(Map<String, dynamic> json) {
     return Word(
-      id: json['id'],
-      word: json['word'],
-      translation: json['translation'],
-      sourceLang: json['sourceLang'],
-      targetLang: json['targetLang'],
-      galaxy: json['galaxy'],
-      subtopic: json['subtopic'],
-      status: json['status'],
+      id: json['id'] is String ? int.parse(json['id']) : json['id'],
+      word: json['word'] as String,
+      translation: json['translation'] as String?,
+      sourceLang: json['sourceLang'] as String,
+      targetLang: json['targetLang'] as String,
+      galaxy: json['galaxy'] as String?,
+      subtopic: json['subtopic'] as String?,
+      status: json['status'] as String?,
     );
   }
 

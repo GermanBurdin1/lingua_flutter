@@ -15,9 +15,10 @@ class Subtopic {
 }
 
 // Données des galaxies (traduites en français)
+// Используем названия БЕЗ пробелов для совместимости с URL
 final List<Galaxy> galaxiesData = [
   Galaxy(
-    name: 'Galaxie Erudition',
+    name: 'Erudition',
     subtopics: [
       Subtopic(name: 'Histoire'),
       Subtopic(name: 'Science'),
@@ -28,17 +29,17 @@ final List<Galaxy> galaxiesData = [
     ],
   ),
   Galaxy(
-    name: 'Galaxie Relations',
+    name: 'Relations',
     subtopics: [
       Subtopic(name: 'Famille'),
       Subtopic(name: 'Amis'),
       Subtopic(name: 'Travail'),
-      Subtopic(name: 'Reseaux sociaux'),
+      Subtopic(name: 'Reseaux-sociaux'),
       Subtopic(name: 'Communication'),
     ],
   ),
   Galaxy(
-    name: 'Galaxie Carriere',
+    name: 'Carriere',
     subtopics: [
       Subtopic(name: 'Emplois'),
       Subtopic(name: 'Competences'),
@@ -47,28 +48,28 @@ final List<Galaxy> galaxiesData = [
     ],
   ),
   Galaxy(
-    name: 'Galaxie Objets',
+    name: 'Objets',
     subtopics: [
       Subtopic(name: 'Meubles'),
       Subtopic(name: 'Technologie'),
       Subtopic(name: 'Outils'),
-      Subtopic(name: 'Vêtements'),
+      Subtopic(name: 'Vetements'),
       Subtopic(name: 'Bijoux'),
       Subtopic(name: 'Jouets'),
     ],
   ),
   Galaxy(
-    name: 'Galaxie Sante',
+    name: 'Sante',
     subtopics: [
       Subtopic(name: 'Maladies'),
       Subtopic(name: 'Traitement'),
       Subtopic(name: 'Prevention'),
-      Subtopic(name: 'Mode de vie sain'),
+      Subtopic(name: 'Mode-de-vie-sain'),
       Subtopic(name: 'Pharmacies'),
     ],
   ),
   Galaxy(
-    name: 'Galaxie Evenements',
+    name: 'Evenements',
     subtopics: [
       Subtopic(name: 'Fetes'),
       Subtopic(name: 'Catastrophes'),
