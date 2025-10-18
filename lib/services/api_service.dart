@@ -225,9 +225,10 @@ class ApiService {
     required String targetLang,
     String? galaxy,
     String? subtopic,
+    String? translation,
   }) async {
     await loadTokens();
-    
+
     final response = await http.post(
       Uri.parse('$vocabularyBaseUrl/lexicon'),
       headers: _headers,
@@ -237,9 +238,10 @@ class ApiService {
         'targetLang': targetLang,
         'galaxy': galaxy,
         'subtopic': subtopic,
+        if (translation != null) 'translation': translation,
       }),
     );
-    
+
     if (response.statusCode == 201 || response.statusCode == 200) {
       return Word.fromJson(json.decode(response.body));
     } else if (response.statusCode == 401) {
@@ -250,9 +252,49 @@ class ApiService {
         targetLang: targetLang,
         galaxy: galaxy,
         subtopic: subtopic,
+        translation: translation,
       );
     } else {
       throw Exception('Ошибка добавления слова');
+    }
+  }
+  
+  // Запросить перевод
+  Future<String> requestTranslation({
+    required String word,
+    required String sourceLang,
+    required String targetLang,
+  }) async {
+    await loadTokens();
+
+    final response = await http.post(
+      Uri.parse('$vocabularyBaseUrl/translate'),
+      headers: _headers,
+      body: json.encode({
+        'word': word,
+        'sourceLang': sourceLang,
+        'targetLang': targetLang,
+      }),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final data = json.decode(response.body);
+      if (data['translations'] != null && data['translations'] is List) {
+        final translations = data['translations'] as List;
+        if (translations.isNotEmpty) {
+          return translations[0].toString();
+        }
+      }
+      return '';
+    } else if (response.statusCode == 401) {
+      await refreshAccessToken();
+      return requestTranslation(
+        word: word,
+        sourceLang: sourceLang,
+        targetLang: targetLang,
+      );
+    } else {
+      throw Exception('Ошибка перевода');
     }
   }
 

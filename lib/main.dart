@@ -12,6 +12,7 @@ import 'screens/galaxy_selection_screen.dart';
 import 'screens/subtopic_selection_screen.dart';
 import 'screens/vocabulary_screen.dart';
 import 'screens/word_detail_screen.dart';
+import 'screens/add_word_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -85,14 +86,25 @@ final GoRouter _router = GoRouter(
           );
         },
       ),
-      GoRoute(
-        path: '/word/:id',
-        builder: (context, state) {
-          final id = state.pathParameters['id']!;
-          return WordDetailScreen(wordId: int.parse(id));
-        },
-      ),
-    ],
+    GoRoute(
+      path: '/word/:id',
+      builder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return WordDetailScreen(wordId: int.parse(id));
+      },
+    ),
+    GoRoute(
+      path: '/add-word',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        return AddWordScreen(
+          initialWord: extra?['word'] as String?,
+          initialGalaxy: extra?['galaxy'] as String?,
+          initialSubtopic: extra?['subtopic'] as String?,
+        );
+      },
+    ),
+  ],
 );
 
 // Splash Screen для проверки авторизации

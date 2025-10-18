@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:record/record.dart';
+import 'package:path_provider/path_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/vocabulary_provider.dart';
 import '../widgets/cosmic_background.dart';
-import '../widgets/voice_recorder.dart';
 import '../models/galaxy.dart';
 
 class MainScreen extends StatefulWidget {
@@ -19,15 +20,66 @@ class _MainScreenState extends State<MainScreen> {
   bool _isVoiceActive = false;
   String? _selectedGalaxy;
   String? _selectedSubtopic;
+  final AudioRecorder _audioRecorder = AudioRecorder();
+  String? _audioPath;
 
+  @override
+  void dispose() {
+    _audioRecorder.dispose();
+    super.dispose();
+  }
+
+  Future<void> _toggleVoiceRecording() async {
+    if (_isVoiceActive) {
+      // Остановить запись
+      final path = await _audioRecorder.stop();
+      if (path != null) {
+        setState(() {
+          _isVoiceActive = false;
+          _audioPath = path;
+        });
+        // Распознать речь
+        final word = await context.read<VocabularyProvider>().recognizeSpeech(path);
+        if (word.isNotEmpty) {
+          _openAddWordForm(initialWord: word);
+        } else {
+          _openAddWordForm();
+        }
+      }
+    } else {
+      // Начать запись
+      if (await _audioRecorder.hasPermission()) {
+        final directory = await getTemporaryDirectory();
+        final filePath = '${directory.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        await _audioRecorder.start(const RecordConfig(), path: filePath);
+        setState(() {
+          _isVoiceActive = true;
+        });
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Permission microphone refusée')),
+          );
+        }
+      }
+    }
+  }
+  
+  void _openAddWordForm({String? initialWord}) {
+    context.push('/add-word', extra: {
+      'word': initialWord,
+      'galaxy': _selectedGalaxy,
+      'subtopic': _selectedSubtopic,
+    });
+  }
+
+  /* Старые методы больше не используются
   void _handleWordRecorded(String word) async {
     if (word.isEmpty) {
-      _showManualInputDialog();
+      _openAddWordForm();
       return;
     }
-
-    // Показываем диалог выбора галактики/подтемы
-    await _showGalaxySubtopicSelector(word);
+    _openAddWordForm(initialWord: word);
   }
 
   Future<void> _showGalaxySubtopicSelector(String word) async {
@@ -132,8 +184,9 @@ class _MainScreenState extends State<MainScreen> {
         );
       },
     );
-  }
+  } */
 
+  /* Старый метод больше не используется
   void _showManualInputDialog() {
     String? manualWord;
     showDialog(
@@ -165,13 +218,14 @@ class _MainScreenState extends State<MainScreen> {
         );
       },
     );
-  }
+  } */
 
   @override
   Widget build(BuildContext context) {
     print('🏠 [MainScreen] Building MainScreen widget');
     final themeProvider = context.watch<ThemeProvider>();
     final authProvider = context.watch<AuthProvider>();
+    final isDark = themeProvider.isDarkMode;
     print('🏠 [MainScreen] Current user: ${authProvider.currentUser?.email}');
     
     return Scaffold(
@@ -205,15 +259,77 @@ class _MainScreenState extends State<MainScreen> {
         isDark: themeProvider.isDarkMode,
         child: Column(
           children: [
-            // Voice Recorder Section
-            VoiceRecorder(
-              isActive: _isVoiceActive,
-              onToggle: () {
-                setState(() {
-                  _isVoiceActive = !_isVoiceActive;
-                });
-              },
-              onWordRecorded: _handleWordRecorded,
+            // Voice Recorder and Add Word Button Section
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 16.0, top: 8.0, bottom: 8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Voice Recorder (compact)
+                    Container(
+                      width: 200, // Маленькая ширина
+                    decoration: BoxDecoration(
+                      color: isDark 
+                          ? Colors.white.withOpacity(0.1) 
+                          : Colors.black.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isDark 
+                            ? const Color(0xFF00F5FF).withOpacity(0.3)
+                            : Colors.blueAccent.withOpacity(0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: _toggleVoiceRecording,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.mic,
+                              color: _isVoiceActive 
+                                  ? (isDark ? const Color(0xFF00FF88) : Colors.green)
+                                  : (isDark ? Colors.white70 : Colors.black54),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              _isVoiceActive ? 'Enregistr...' : 'Commande vocale',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: isDark ? Colors.white70 : Colors.black87,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Add Word Button
+                  ElevatedButton.icon(
+                    onPressed: _openAddWordForm,
+                    icon: const Icon(Icons.add, size: 20),
+                    label: const Text('Ajouter un mot'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isDark 
+                          ? const Color(0xFF00F5FF) 
+                          : const Color(0xFF0066FF),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 3,
+                    ),
+                  ),
+                ],
+                ),
+              ),
             ),
             // Main Content
             Expanded(
