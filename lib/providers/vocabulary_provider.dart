@@ -36,6 +36,7 @@ class VocabularyProvider with ChangeNotifier {
     String? galaxy,
     String? subtopic,
     String? translation,
+    String? type,
   }) async {
     try {
       final newWord = await _apiService.addWord(
@@ -45,6 +46,7 @@ class VocabularyProvider with ChangeNotifier {
         galaxy: galaxy,
         subtopic: subtopic,
         translation: translation,
+        type: type,
       );
       _words.insert(0, newWord);
       notifyListeners();

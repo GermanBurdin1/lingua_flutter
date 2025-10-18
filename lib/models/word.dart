@@ -7,16 +7,18 @@ class Word {
   final String? galaxy;
   final String? subtopic;
   final String? status;
+  final String? type;
 
   Word({
     required this.id,
     required this.word,
     this.translation,
-    required this.sourceLang,
-    required this.targetLang,
+    this.sourceLang = 'fr', // Default value
+    this.targetLang = 'ru', // Default value
     this.galaxy,
     this.subtopic,
     this.status,
+    this.type,
   });
 
   factory Word.fromJson(Map<String, dynamic> json) {
@@ -24,11 +26,12 @@ class Word {
       id: json['id'] is String ? int.parse(json['id']) : json['id'],
       word: json['word'] as String,
       translation: json['translation'] as String?,
-      sourceLang: json['sourceLang'] as String,
-      targetLang: json['targetLang'] as String,
+      sourceLang: json['sourceLang'] as String? ?? 'fr',
+      targetLang: json['targetLang'] as String? ?? 'ru',
       galaxy: json['galaxy'] as String?,
       subtopic: json['subtopic'] as String?,
       status: json['status'] as String?,
+      type: json['type'] as String?,
     );
   }
 
@@ -42,6 +45,7 @@ class Word {
       'galaxy': galaxy,
       'subtopic': subtopic,
       'status': status,
+      'type': type,
     };
   }
 }

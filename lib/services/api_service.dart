@@ -226,20 +226,38 @@ class ApiService {
     String? galaxy,
     String? subtopic,
     String? translation,
+    String? type,
   }) async {
     await loadTokens();
+
+    // Формируем данные в формате, который ожидает бэкенд (как в Angular)
+    final Map<String, dynamic> body = {
+      'word': word,
+      'galaxy': galaxy,
+      'subtopic': subtopic,
+      'type': type ?? 'word',
+    };
+
+    // Если есть перевод, добавляем массив translations (как в Angular)
+    if (translation != null && translation.isNotEmpty) {
+      body['translations'] = [
+        {
+          'id': 0,
+          'lexiconId': 0,
+          'source': word,
+          'target': translation,
+          'sourceLang': sourceLang,
+          'targetLang': targetLang,
+          'meaning': '',
+          'example': null,
+        }
+      ];
+    }
 
     final response = await http.post(
       Uri.parse('$vocabularyBaseUrl/lexicon'),
       headers: _headers,
-      body: json.encode({
-        'word': word,
-        'sourceLang': sourceLang,
-        'targetLang': targetLang,
-        'galaxy': galaxy,
-        'subtopic': subtopic,
-        if (translation != null) 'translation': translation,
-      }),
+      body: json.encode(body),
     );
 
     if (response.statusCode == 201 || response.statusCode == 200) {
@@ -253,6 +271,7 @@ class ApiService {
         galaxy: galaxy,
         subtopic: subtopic,
         translation: translation,
+        type: type,
       );
     } else {
       throw Exception('Ошибка добавления слова');

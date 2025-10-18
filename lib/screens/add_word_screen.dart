@@ -119,6 +119,7 @@ class _AddWordScreenState extends State<AddWordScreen> {
             translation: _translationController.text.trim().isNotEmpty
                 ? _translationController.text.trim()
                 : null,
+            type: _selectedType, // 'word' or 'expression'
           );
 
       if (mounted) {
