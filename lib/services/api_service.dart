@@ -354,6 +354,10 @@ class ApiService {
           'totalWords': item['totalWords'] as int,
           'totalExpressions': item['totalExpressions'] as int,
           'total': item['total'] as int,
+          'translatedWords': item['translatedWords'] as int? ?? 0,
+          'untranslatedWords': item['untranslatedWords'] as int? ?? 0,
+          'translatedExpressions': item['translatedExpressions'] as int? ?? 0,
+          'untranslatedExpressions': item['untranslatedExpressions'] as int? ?? 0,
         };
       }
       

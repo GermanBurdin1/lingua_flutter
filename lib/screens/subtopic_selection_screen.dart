@@ -144,6 +144,10 @@ class _SubtopicSelectionScreenState extends State<SubtopicSelectionScreen> {
                         isDark: themeProvider.isDarkMode,
                         totalWords: stats?['totalWords'] ?? 0,
                         totalExpressions: stats?['totalExpressions'] ?? 0,
+                        translatedWords: stats?['translatedWords'] ?? 0,
+                        untranslatedWords: stats?['untranslatedWords'] ?? 0,
+                        translatedExpressions: stats?['translatedExpressions'] ?? 0,
+                        untranslatedExpressions: stats?['untranslatedExpressions'] ?? 0,
                         isLoadingStats: _isLoadingStats,
                       );
                     },
@@ -164,6 +168,10 @@ class _SubtopicCard extends StatefulWidget {
   final bool isDark;
   final int totalWords;
   final int totalExpressions;
+  final int translatedWords;
+  final int untranslatedWords;
+  final int translatedExpressions;
+  final int untranslatedExpressions;
   final bool isLoadingStats;
 
   const _SubtopicCard({
@@ -172,6 +180,10 @@ class _SubtopicCard extends StatefulWidget {
     required this.isDark,
     required this.totalWords,
     required this.totalExpressions,
+    required this.translatedWords,
+    required this.untranslatedWords,
+    required this.translatedExpressions,
+    required this.untranslatedExpressions,
     required this.isLoadingStats,
   });
 
@@ -264,20 +276,76 @@ class _SubtopicCardState extends State<_SubtopicCard> {
                         child: Column(
                           children: [
                             if (widget.totalWords > 0)
-                              Text(
-                                '📚 ${widget.totalWords} mot${widget.totalWords > 1 ? 's' : ''}',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: widget.isDark ? Colors.white70 : Colors.black54,
-                                ),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    '📚 ${widget.totalWords}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: widget.isDark ? Colors.white70 : Colors.black54,
+                                    ),
+                                  ),
+                                  if (widget.translatedWords > 0 || widget.untranslatedWords > 0) ...[
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '(✓${widget.translatedWords}',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: widget.isDark ? const Color(0xFF00FF88) : Colors.green,
+                                      ),
+                                    ),
+                                    if (widget.untranslatedWords > 0)
+                                      Text(
+                                        '/✗${widget.untranslatedWords})',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: widget.isDark ? Colors.orange : Colors.deepOrange,
+                                        ),
+                                      )
+                                    else
+                                      const Text(
+                                        ')',
+                                        style: TextStyle(fontSize: 10),
+                                      ),
+                                  ],
+                                ],
                               ),
                             if (widget.totalExpressions > 0)
-                              Text(
-                                '💬 ${widget.totalExpressions} expr.',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: widget.isDark ? Colors.white70 : Colors.black54,
-                                ),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    '💬 ${widget.totalExpressions}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: widget.isDark ? Colors.white70 : Colors.black54,
+                                    ),
+                                  ),
+                                  if (widget.translatedExpressions > 0 || widget.untranslatedExpressions > 0) ...[
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '(✓${widget.translatedExpressions}',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: widget.isDark ? const Color(0xFF00FF88) : Colors.green,
+                                      ),
+                                    ),
+                                    if (widget.untranslatedExpressions > 0)
+                                      Text(
+                                        '/✗${widget.untranslatedExpressions})',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: widget.isDark ? Colors.orange : Colors.deepOrange,
+                                        ),
+                                      )
+                                    else
+                                      const Text(
+                                        ')',
+                                        style: TextStyle(fontSize: 10),
+                                      ),
+                                  ],
+                                ],
                               ),
                           ],
                         ),
