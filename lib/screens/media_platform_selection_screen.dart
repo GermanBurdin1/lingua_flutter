@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../models/media_platform.dart';
 import '../providers/theme_provider.dart';
@@ -126,7 +127,11 @@ class _MediaPlatformSelectionScreenState extends State<MediaPlatformSelectionScr
                                       },
                                     ),
                                     onTap: () {
-                                      // TODO: Navigate to themes/subtopics for this platform
+                                      // Navigate to galaxy selection for this platform
+                                      context.push(
+                                        '/media-themes/${Uri.encodeComponent(widget.mediaType)}/'
+                                        '${Uri.encodeComponent(platform.name)}',
+                                      );
                                     },
                                   ),
                                 );

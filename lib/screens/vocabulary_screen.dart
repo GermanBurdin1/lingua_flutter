@@ -10,11 +10,15 @@ import '../models/word.dart';
 class VocabularyScreen extends StatefulWidget {
   final String? galaxyName;
   final String? subtopicName;
+  final String? mediaType; // Pour vocabulaire médias
+  final String? mediaPlatform; // Pour vocabulaire médias
 
   const VocabularyScreen({
     super.key,
     this.galaxyName,
     this.subtopicName,
+    this.mediaType,
+    this.mediaPlatform,
   });
 
   @override
@@ -43,6 +47,8 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
         'word': word,
         'galaxy': widget.galaxyName,
         'subtopic': widget.subtopicName,
+        'mediaType': widget.mediaType,
+        'mediaPlatform': widget.mediaPlatform,
       },
     );
 
@@ -62,6 +68,8 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
       extra: {
         'galaxy': widget.galaxyName,
         'subtopic': widget.subtopicName,
+        'mediaType': widget.mediaType,
+        'mediaPlatform': widget.mediaPlatform,
       },
     );
 
@@ -205,6 +213,8 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
         'translation': word.translation,
         'galaxy': word.galaxy ?? widget.galaxyName,
         'subtopic': word.subtopic ?? widget.subtopicName,
+        'mediaType': word.mediaType ?? widget.mediaType,
+        'mediaPlatform': word.mediaPlatform ?? widget.mediaPlatform,
         'wordId': word.id, // Передаем ID для редактирования
       },
     );

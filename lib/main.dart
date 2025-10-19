@@ -15,6 +15,8 @@ import 'screens/word_detail_screen.dart';
 import 'screens/add_word_screen.dart';
 import 'screens/media_galaxy_selection_screen.dart';
 import 'screens/media_platform_selection_screen.dart';
+import 'screens/media_galaxy_themes_screen.dart';
+import 'screens/media_subtopic_selection_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -122,6 +124,45 @@ final GoRouter _router = GoRouter(
         builder: (context, state) {
           final mediaType = state.pathParameters['mediaType']!;
           return MediaPlatformSelectionScreen(mediaType: mediaType);
+        },
+      ),
+      GoRoute(
+        path: '/media-themes/:mediaType/:platform',
+        builder: (context, state) {
+          final mediaType = Uri.decodeComponent(state.pathParameters['mediaType']!);
+          final platform = Uri.decodeComponent(state.pathParameters['platform']!);
+          return MediaGalaxyThemesScreen(
+            mediaType: mediaType,
+            platformName: platform,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/media-vocabulary/:mediaType/:platform/:galaxy',
+        builder: (context, state) {
+          final mediaType = Uri.decodeComponent(state.pathParameters['mediaType']!);
+          final platform = Uri.decodeComponent(state.pathParameters['platform']!);
+          final galaxy = Uri.decodeComponent(state.pathParameters['galaxy']!);
+          return MediaSubtopicSelectionScreen(
+            mediaType: mediaType,
+            platformName: platform,
+            galaxyName: galaxy,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/media-words/:mediaType/:platform/:galaxy/:subtopic',
+        builder: (context, state) {
+          final mediaType = Uri.decodeComponent(state.pathParameters['mediaType']!);
+          final platform = Uri.decodeComponent(state.pathParameters['platform']!);
+          final galaxy = Uri.decodeComponent(state.pathParameters['galaxy']!);
+          final subtopic = Uri.decodeComponent(state.pathParameters['subtopic']!);
+          return VocabularyScreen(
+            galaxyName: galaxy,
+            subtopicName: subtopic,
+            mediaType: mediaType,
+            mediaPlatform: platform,
+          );
         },
       ),
   ],

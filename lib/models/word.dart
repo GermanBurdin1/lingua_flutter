@@ -8,6 +8,8 @@ class Word {
   final String? subtopic;
   final String? status;
   final String? type;
+  final String? mediaType; // 'films', 'series', 'music', 'podcasts'
+  final String? mediaPlatform; // 'Netflix', 'Spotify', etc.
 
   Word({
     required this.id,
@@ -19,6 +21,8 @@ class Word {
     this.subtopic,
     this.status,
     this.type,
+    this.mediaType,
+    this.mediaPlatform,
   });
 
   factory Word.fromJson(Map<String, dynamic> json) {
@@ -32,6 +36,8 @@ class Word {
       subtopic: json['subtopic'] as String?,
       status: json['status'] as String?,
       type: json['type'] as String?,
+      mediaType: json['mediaType'] as String?,
+      mediaPlatform: json['mediaPlatform'] as String?,
     );
   }
 
@@ -46,6 +52,8 @@ class Word {
       'subtopic': subtopic,
       'status': status,
       'type': type,
+      'mediaType': mediaType,
+      'mediaPlatform': mediaPlatform,
     };
   }
 }
