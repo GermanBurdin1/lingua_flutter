@@ -346,9 +346,11 @@ class _MediaPlatformContentScreenState extends State<MediaPlatformContentScreen>
             title: Text(content, style: const TextStyle(fontWeight: FontWeight.w600)),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
-              // TODO: Navigate to words for this content
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Ouvrir: $content (en développement)')),
+              // Navigate to vocabulary screen for this content
+              context.push(
+                '/media-content-words/${Uri.encodeComponent(widget.mediaType)}/'
+                '${Uri.encodeComponent(widget.platformName)}/'
+                '${Uri.encodeComponent(content)}',
               );
             },
           ),

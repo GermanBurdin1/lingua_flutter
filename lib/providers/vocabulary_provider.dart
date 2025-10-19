@@ -13,13 +13,25 @@ class VocabularyProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   
-  Future<void> fetchWords({String? galaxy, String? subtopic}) async {
+  Future<void> fetchWords({
+    String? galaxy,
+    String? subtopic,
+    String? mediaType,
+    String? mediaPlatform,
+    String? mediaContentTitle,
+  }) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
     
     try {
-      _words = await _apiService.getLexicon(galaxy: galaxy, subtopic: subtopic);
+      _words = await _apiService.getLexicon(
+        galaxy: galaxy,
+        subtopic: subtopic,
+        mediaType: mediaType,
+        mediaPlatform: mediaPlatform,
+        mediaContentTitle: mediaContentTitle,
+      );
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -37,6 +49,12 @@ class VocabularyProvider with ChangeNotifier {
     String? subtopic,
     String? translation,
     String? type,
+    String? mediaType,
+    String? mediaPlatform,
+    String? mediaContentTitle,
+    int? season,
+    int? episode,
+    String? timestamp,
   }) async {
     try {
       final newWord = await _apiService.addWord(
@@ -47,6 +65,12 @@ class VocabularyProvider with ChangeNotifier {
         subtopic: subtopic,
         translation: translation,
         type: type,
+        mediaType: mediaType,
+        mediaPlatform: mediaPlatform,
+        mediaContentTitle: mediaContentTitle,
+        season: season,
+        episode: episode,
+        timestamp: timestamp,
       );
       _words.insert(0, newWord);
       notifyListeners();

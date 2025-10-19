@@ -10,6 +10,10 @@ class Word {
   final String? type;
   final String? mediaType; // 'films', 'series', 'music', 'podcasts'
   final String? mediaPlatform; // 'Netflix', 'Spotify', etc.
+  final String? mediaContentTitle; // 'Dexter', 'Inception', etc.
+  final int? season; // Сезон (для сериалов)
+  final int? episode; // Серия (для сериалов)
+  final String? timestamp; // Временная метка: "12:34"
 
   Word({
     required this.id,
@@ -23,6 +27,10 @@ class Word {
     this.type,
     this.mediaType,
     this.mediaPlatform,
+    this.mediaContentTitle,
+    this.season,
+    this.episode,
+    this.timestamp,
   });
 
   factory Word.fromJson(Map<String, dynamic> json) {
@@ -38,6 +46,10 @@ class Word {
       type: json['type'] as String?,
       mediaType: json['mediaType'] as String?,
       mediaPlatform: json['mediaPlatform'] as String?,
+      mediaContentTitle: json['mediaContentTitle'] as String?,
+      season: json['season'] as int?,
+      episode: json['episode'] as int?,
+      timestamp: json['timestamp'] as String?,
     );
   }
 
@@ -54,6 +66,10 @@ class Word {
       'type': type,
       'mediaType': mediaType,
       'mediaPlatform': mediaPlatform,
+      'mediaContentTitle': mediaContentTitle,
+      'season': season,
+      'episode': episode,
+      'timestamp': timestamp,
     };
   }
 }

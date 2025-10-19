@@ -167,18 +167,29 @@ class ApiService {
   // ============= VOCABULARY ENDPOINTS =============
 
   // Получить словарь
-  Future<List<Word>> getLexicon({String? galaxy, String? subtopic}) async {
+  Future<List<Word>> getLexicon({
+    String? galaxy,
+    String? subtopic,
+    String? mediaType,
+    String? mediaPlatform,
+    String? mediaContentTitle,
+  }) async {
     await loadTokens();
     
     print('📚 getLexicon called');
     print('📚 galaxy: $galaxy, subtopic: $subtopic');
+    print('📚 mediaType: $mediaType, mediaPlatform: $mediaPlatform, mediaContentTitle: $mediaContentTitle');
     print('📚 access_token present: ${_accessToken != null}');
     
     final queryParams = <String, String>{};
-    if (galaxy != null) queryParams['galaxy'] = galaxy;
-    if (subtopic != null) queryParams['subtopic'] = subtopic;
+    if (galaxy != null && galaxy.isNotEmpty) queryParams['galaxy'] = galaxy;
+    if (subtopic != null && subtopic.isNotEmpty) queryParams['subtopic'] = subtopic;
+    if (mediaType != null && mediaType.isNotEmpty) queryParams['mediaType'] = mediaType;
+    if (mediaPlatform != null && mediaPlatform.isNotEmpty) queryParams['mediaPlatform'] = mediaPlatform;
+    if (mediaContentTitle != null && mediaContentTitle.isNotEmpty) queryParams['mediaContentTitle'] = mediaContentTitle;
     
-    final uri = Uri.parse('$vocabularyBaseUrl/lexicon')
+    // 📱 Используем специальный endpoint для мобильного приложения с фильтрацией
+    final uri = Uri.parse('$vocabularyBaseUrl/lexicon/mobile/filtered')
         .replace(queryParameters: queryParams);
     
     print('📚 Request URL: $uri');
@@ -213,7 +224,13 @@ class ApiService {
       return data.map((json) => Word.fromJson(json)).toList();
     } else if (response.statusCode == 401) {
       await refreshAccessToken();
-      return getLexicon(galaxy: galaxy, subtopic: subtopic);
+      return getLexicon(
+        galaxy: galaxy,
+        subtopic: subtopic,
+        mediaType: mediaType,
+        mediaPlatform: mediaPlatform,
+        mediaContentTitle: mediaContentTitle,
+      );
     } else {
       throw Exception('Ошибка загрузки словаря');
     }
@@ -228,6 +245,12 @@ class ApiService {
     String? subtopic,
     String? translation,
     String? type,
+    String? mediaType,
+    String? mediaPlatform,
+    String? mediaContentTitle,
+    int? season,
+    int? episode,
+    String? timestamp,
   }) async {
     await loadTokens();
 
@@ -237,6 +260,12 @@ class ApiService {
       'galaxy': galaxy,
       'subtopic': subtopic,
       'type': type ?? 'word',
+      'mediaType': mediaType,
+      'mediaPlatform': mediaPlatform,
+      'mediaContentTitle': mediaContentTitle,
+      'season': season,
+      'episode': episode,
+      'timestamp': timestamp,
     };
 
     // Если есть перевод, добавляем массив translations (как в Angular)
@@ -273,6 +302,12 @@ class ApiService {
         subtopic: subtopic,
         translation: translation,
         type: type,
+        mediaType: mediaType,
+        mediaPlatform: mediaPlatform,
+        mediaContentTitle: mediaContentTitle,
+        season: season,
+        episode: episode,
+        timestamp: timestamp,
       );
     } else {
       throw Exception('Ошибка добавления слова');

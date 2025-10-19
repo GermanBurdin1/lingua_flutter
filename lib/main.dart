@@ -112,6 +112,9 @@ final GoRouter _router = GoRouter(
             initialTranslation: extra?['translation'] as String?,
             initialGalaxy: extra?['galaxy'] as String?,
             initialSubtopic: extra?['subtopic'] as String?,
+            mediaType: extra?['mediaType'] as String?,
+            mediaPlatform: extra?['mediaPlatform'] as String?,
+            mediaContentTitle: extra?['mediaContentTitle'] as String?,
             wordId: extra?['wordId'] as int?,
           );
         },
@@ -140,14 +143,17 @@ final GoRouter _router = GoRouter(
         },
       ),
       GoRoute(
-        path: '/media-content-list/:mediaType/:platform',
+        path: '/media-content-words/:mediaType/:platform/:contentTitle',
         builder: (context, state) {
           final mediaType = Uri.decodeComponent(state.pathParameters['mediaType']!);
           final platform = Uri.decodeComponent(state.pathParameters['platform']!);
-          // TODO: Создать MediaContentListScreen
-          return Scaffold(
-            appBar: AppBar(title: Text('$platform - Contenu')),
-            body: const Center(child: Text('Liste des films/séries - en cours...')),
+          final contentTitle = Uri.decodeComponent(state.pathParameters['contentTitle']!);
+          return VocabularyScreen(
+            galaxyName: null,
+            subtopicName: null,
+            mediaType: mediaType,
+            mediaPlatform: platform,
+            mediaContentTitle: contentTitle,
           );
         },
       ),

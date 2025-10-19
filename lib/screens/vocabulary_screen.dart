@@ -12,6 +12,7 @@ class VocabularyScreen extends StatefulWidget {
   final String? subtopicName;
   final String? mediaType; // Pour vocabulaire médias
   final String? mediaPlatform; // Pour vocabulaire médias
+  final String? mediaContentTitle; // Pour contenu spécifique (Dexter, Inception...)
 
   const VocabularyScreen({
     super.key,
@@ -19,6 +20,7 @@ class VocabularyScreen extends StatefulWidget {
     this.subtopicName,
     this.mediaType,
     this.mediaPlatform,
+    this.mediaContentTitle,
   });
 
   @override
@@ -35,6 +37,9 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
       context.read<VocabularyProvider>().fetchWords(
         galaxy: widget.galaxyName,
         subtopic: widget.subtopicName,
+        mediaType: widget.mediaType,
+        mediaPlatform: widget.mediaPlatform,
+        mediaContentTitle: widget.mediaContentTitle,
       );
     });
   }
@@ -49,6 +54,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
         'subtopic': widget.subtopicName,
         'mediaType': widget.mediaType,
         'mediaPlatform': widget.mediaPlatform,
+        'mediaContentTitle': widget.mediaContentTitle,
       },
     );
 
@@ -57,6 +63,9 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
       context.read<VocabularyProvider>().fetchWords(
         galaxy: widget.galaxyName,
         subtopic: widget.subtopicName,
+        mediaType: widget.mediaType,
+        mediaPlatform: widget.mediaPlatform,
+        mediaContentTitle: widget.mediaContentTitle,
       );
     }
   }
@@ -70,6 +79,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
         'subtopic': widget.subtopicName,
         'mediaType': widget.mediaType,
         'mediaPlatform': widget.mediaPlatform,
+        'mediaContentTitle': widget.mediaContentTitle,
       },
     );
 
@@ -78,6 +88,9 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
       context.read<VocabularyProvider>().fetchWords(
         galaxy: widget.galaxyName,
         subtopic: widget.subtopicName,
+        mediaType: widget.mediaType,
+        mediaPlatform: widget.mediaPlatform,
+        mediaContentTitle: widget.mediaContentTitle,
       );
     }
   }
@@ -215,6 +228,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
         'subtopic': word.subtopic ?? widget.subtopicName,
         'mediaType': word.mediaType ?? widget.mediaType,
         'mediaPlatform': word.mediaPlatform ?? widget.mediaPlatform,
+        'mediaContentTitle': word.mediaContentTitle ?? widget.mediaContentTitle,
         'wordId': word.id, // Передаем ID для редактирования
       },
     );
@@ -224,6 +238,9 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
       context.read<VocabularyProvider>().fetchWords(
         galaxy: widget.galaxyName,
         subtopic: widget.subtopicName,
+        mediaType: widget.mediaType,
+        mediaPlatform: widget.mediaPlatform,
+        mediaContentTitle: widget.mediaContentTitle,
       );
     }
   }
@@ -311,9 +328,11 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         title: Text(
-          widget.subtopicName != null
-              ? widget.subtopicName!.toUpperCase()
-              : 'VOCABULAIRE',
+          widget.mediaContentTitle != null
+              ? widget.mediaContentTitle!.toUpperCase()
+              : (widget.subtopicName != null
+                  ? widget.subtopicName!.toUpperCase()
+                  : 'VOCABULAIRE'),
         ),
       ),
       body: CosmicBackground(

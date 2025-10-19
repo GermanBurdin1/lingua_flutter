@@ -10,6 +10,9 @@ class AddWordScreen extends StatefulWidget {
   final String? initialTranslation;
   final String? initialGalaxy;
   final String? initialSubtopic;
+  final String? mediaType;
+  final String? mediaPlatform;
+  final String? mediaContentTitle;
   final int? wordId; // ID для редактирования
 
   const AddWordScreen({
@@ -18,6 +21,9 @@ class AddWordScreen extends StatefulWidget {
     this.initialTranslation,
     this.initialGalaxy,
     this.initialSubtopic,
+    this.mediaType,
+    this.mediaPlatform,
+    this.mediaContentTitle,
     this.wordId,
   });
 
@@ -29,6 +35,9 @@ class _AddWordScreenState extends State<AddWordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _wordController = TextEditingController();
   final _translationController = TextEditingController();
+  final _seasonController = TextEditingController();
+  final _episodeController = TextEditingController();
+  final _timestampController = TextEditingController();
 
   String _selectedType = 'word'; // 'word' or 'expression'
   String? _selectedGalaxy;
@@ -50,6 +59,9 @@ class _AddWordScreenState extends State<AddWordScreen> {
   void dispose() {
     _wordController.dispose();
     _translationController.dispose();
+    _seasonController.dispose();
+    _episodeController.dispose();
+    _timestampController.dispose();
     super.dispose();
   }
 
@@ -132,6 +144,18 @@ class _AddWordScreenState extends State<AddWordScreen> {
                 ? _translationController.text.trim()
                 : null,
             type: _selectedType, // 'word' or 'expression'
+            mediaType: widget.mediaType,
+            mediaPlatform: widget.mediaPlatform,
+            mediaContentTitle: widget.mediaContentTitle,
+            season: _seasonController.text.trim().isNotEmpty
+                ? int.tryParse(_seasonController.text.trim())
+                : null,
+            episode: _episodeController.text.trim().isNotEmpty
+                ? int.tryParse(_episodeController.text.trim())
+                : null,
+            timestamp: _timestampController.text.trim().isNotEmpty
+                ? _timestampController.text.trim()
+                : null,
           );
 
       if (mounted) {
@@ -398,6 +422,63 @@ class _AddWordScreenState extends State<AddWordScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
+
+                  // Временные метки (опционально, только для медиа-контента)
+                  if (widget.mediaContentTitle != null) ...[
+                    // Для сериалов: сезон и серия
+                    if (widget.mediaType == 'series') ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _seasonController,
+                              decoration: InputDecoration(
+                                labelText: 'Saison (optionnel)',
+                                hintText: '1',
+                                prefixIcon: const Icon(Icons.tv),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              keyboardType: TextInputType.number,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _episodeController,
+                              decoration: InputDecoration(
+                                labelText: 'Épisode (optionnel)',
+                                hintText: '5',
+                                prefixIcon: const Icon(Icons.video_library),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              keyboardType: TextInputType.number,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    // Для всех типов медиа: временная метка
+                    TextFormField(
+                      controller: _timestampController,
+                      decoration: InputDecoration(
+                        labelText: 'Minute:Seconde (optionnel)',
+                        hintText: widget.mediaType == 'music' || widget.mediaType == 'podcasts'
+                            ? '2:34'
+                            : '12:34',
+                        prefixIcon: const Icon(Icons.access_time),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      keyboardType: TextInputType.text,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
 
                   // Galaxy selector
                   DropdownButtonFormField<String>(
