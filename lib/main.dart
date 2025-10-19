@@ -13,6 +13,8 @@ import 'screens/subtopic_selection_screen.dart';
 import 'screens/vocabulary_screen.dart';
 import 'screens/word_detail_screen.dart';
 import 'screens/add_word_screen.dart';
+import 'screens/media_galaxy_selection_screen.dart';
+import 'screens/media_platform_selection_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -108,6 +110,18 @@ final GoRouter _router = GoRouter(
             initialSubtopic: extra?['subtopic'] as String?,
             wordId: extra?['wordId'] as int?,
           );
+        },
+      ),
+      // 📱 [MOBILE APP] Routes pour vocabulaire médias
+      GoRoute(
+        path: '/media-galaxies',
+        builder: (context, state) => const MediaGalaxySelectionScreen(),
+      ),
+      GoRoute(
+        path: '/media-platforms/:mediaType',
+        builder: (context, state) {
+          final mediaType = state.pathParameters['mediaType']!;
+          return MediaPlatformSelectionScreen(mediaType: mediaType);
         },
       ),
   ],

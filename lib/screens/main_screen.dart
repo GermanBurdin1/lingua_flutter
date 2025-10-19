@@ -377,15 +377,15 @@ class _MainScreenState extends State<MainScreen> {
                       ),
                       const SizedBox(height: 16),
                       _MenuButton(
-                        icon: Icons.translate,
-                        label: 'Traductions',
+                        icon: Icons.movie,
+                        label: 'Médias',
                         gradient: LinearGradient(
                           colors: themeProvider.isDarkMode
-                              ? [const Color(0xFFFF00FF), const Color(0xFFFF00AA)]
-                              : [const Color(0xFF7C4DFF), const Color(0xFF9C4DFF)],
+                              ? [const Color(0xFFFF6B9D), const Color(0xFFFF3D71)]
+                              : [const Color(0xFFFF1744), const Color(0xFFFF5252)],
                         ),
                         onTap: () {
-                          // TODO: Navigate to translations
+                          context.push('/media-galaxies');
                         },
                       ),
                       const SizedBox(height: 16),

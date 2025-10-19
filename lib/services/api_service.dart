@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/word.dart';
 import '../models/user.dart';
+import '../models/media_platform.dart';
 
 class ApiService {
   // Используем API Gateway для всех запросов
@@ -402,6 +403,95 @@ class ApiService {
     } catch (e) {
       print('Ошибка распознавания: $e');
       return '';
+    }
+  }
+
+  // 📱 ========== MEDIA PLATFORMS (для мобильного приложения) ==========
+
+  // Получить все платформы пользователя
+  Future<List<MediaPlatform>> getAllMediaPlatforms() async {
+    await loadTokens();
+
+    final response = await http.get(
+      Uri.parse('$vocabularyBaseUrl/media-platforms'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((json) => MediaPlatform.fromJson(json)).toList();
+    } else if (response.statusCode == 401) {
+      await refreshAccessToken();
+      return getAllMediaPlatforms();
+    } else {
+      throw Exception('Ошибка загрузки платформ');
+    }
+  }
+
+  // Получить платформы по типу медиа
+  Future<List<MediaPlatform>> getMediaPlatformsByType(String mediaType) async {
+    await loadTokens();
+
+    final uri = Uri.parse('$vocabularyBaseUrl/media-platforms/by-type')
+        .replace(queryParameters: {'mediaType': mediaType});
+
+    final response = await http.get(uri, headers: _headers);
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((json) => MediaPlatform.fromJson(json)).toList();
+    } else if (response.statusCode == 401) {
+      await refreshAccessToken();
+      return getMediaPlatformsByType(mediaType);
+    } else {
+      throw Exception('Ошибка загрузки платформ');
+    }
+  }
+
+  // Создать новую платформу
+  Future<MediaPlatform> createMediaPlatform({
+    required String mediaType,
+    required String name,
+    String? icon,
+  }) async {
+    await loadTokens();
+
+    final response = await http.post(
+      Uri.parse('$vocabularyBaseUrl/media-platforms'),
+      headers: _headers,
+      body: json.encode({
+        'mediaType': mediaType,
+        'name': name,
+        'icon': icon,
+      }),
+    );
+
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      return MediaPlatform.fromJson(json.decode(response.body));
+    } else if (response.statusCode == 401) {
+      await refreshAccessToken();
+      return createMediaPlatform(mediaType: mediaType, name: name, icon: icon);
+    } else {
+      throw Exception('Ошибка создания платформы');
+    }
+  }
+
+  // Удалить платформу
+  Future<void> deleteMediaPlatform(int platformId) async {
+    await loadTokens();
+
+    final response = await http.delete(
+      Uri.parse('$vocabularyBaseUrl/media-platforms/$platformId'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 204) {
+      return;
+    } else if (response.statusCode == 401) {
+      await refreshAccessToken();
+      return deleteMediaPlatform(platformId);
+    } else {
+      throw Exception('Ошибка удаления платформы');
     }
   }
 }
