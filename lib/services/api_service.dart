@@ -336,6 +336,36 @@ class ApiService {
     }
   }
 
+  // 📱 [MOBILE APP] Получить статистику по подтемам
+  Future<Map<String, Map<String, int>>> getSubtopicsStats(String galaxy) async {
+    await loadTokens();
+
+    final uri = Uri.parse('$vocabularyBaseUrl/lexicon/stats/subtopics')
+        .replace(queryParameters: {'galaxy': galaxy});
+
+    final response = await http.get(uri, headers: _headers);
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      final Map<String, Map<String, int>> stats = {};
+      
+      for (var item in data) {
+        stats[item['subtopic']] = {
+          'totalWords': item['totalWords'] as int,
+          'totalExpressions': item['totalExpressions'] as int,
+          'total': item['total'] as int,
+        };
+      }
+      
+      return stats;
+    } else if (response.statusCode == 401) {
+      await refreshAccessToken();
+      return getSubtopicsStats(galaxy);
+    } else {
+      throw Exception('Ошибка получения статистики');
+    }
+  }
+
   // Распознать речь
   Future<String> recognizeSpeech(String audioPath) async {
     await loadTokens();

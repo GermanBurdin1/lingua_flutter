@@ -4,8 +4,9 @@ import 'package:provider/provider.dart';
 import '../models/galaxy.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/cosmic_background.dart';
+import '../services/api_service.dart';
 
-class SubtopicSelectionScreen extends StatelessWidget {
+class SubtopicSelectionScreen extends StatefulWidget {
   final String galaxyName;
 
   const SubtopicSelectionScreen({
@@ -14,10 +15,44 @@ class SubtopicSelectionScreen extends StatelessWidget {
   });
 
   @override
+  State<SubtopicSelectionScreen> createState() => _SubtopicSelectionScreenState();
+}
+
+class _SubtopicSelectionScreenState extends State<SubtopicSelectionScreen> {
+  final ApiService _apiService = ApiService();
+  Map<String, Map<String, int>> _stats = {};
+  bool _isLoadingStats = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    try {
+      final stats = await _apiService.getSubtopicsStats(widget.galaxyName);
+      if (mounted) {
+        setState(() {
+          _stats = stats;
+          _isLoadingStats = false;
+        });
+      }
+    } catch (e) {
+      print('❌ Ошибка загрузки статистики: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingStats = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final galaxy = galaxiesData.firstWhere(
-      (g) => g.name == galaxyName,
+      (g) => g.name == widget.galaxyName,
       orElse: () => galaxiesData[0],
     );
 
@@ -102,10 +137,14 @@ class SubtopicSelectionScreen extends StatelessWidget {
                     itemCount: galaxy.subtopics.length,
                     itemBuilder: (context, index) {
                       final subtopic = galaxy.subtopics[index];
+                      final stats = _stats[subtopic.name];
                       return _SubtopicCard(
                         subtopic: subtopic,
                         galaxyName: galaxy.name,
                         isDark: themeProvider.isDarkMode,
+                        totalWords: stats?['totalWords'] ?? 0,
+                        totalExpressions: stats?['totalExpressions'] ?? 0,
+                        isLoadingStats: _isLoadingStats,
                       );
                     },
                   ),
@@ -119,80 +158,133 @@ class SubtopicSelectionScreen extends StatelessWidget {
   }
 }
 
-class _SubtopicCard extends StatelessWidget {
+class _SubtopicCard extends StatefulWidget {
   final Subtopic subtopic;
   final String galaxyName;
   final bool isDark;
+  final int totalWords;
+  final int totalExpressions;
+  final bool isLoadingStats;
 
   const _SubtopicCard({
     required this.subtopic,
     required this.galaxyName,
     required this.isDark,
+    required this.totalWords,
+    required this.totalExpressions,
+    required this.isLoadingStats,
   });
 
   @override
+  State<_SubtopicCard> createState() => _SubtopicCardState();
+}
+
+class _SubtopicCardState extends State<_SubtopicCard> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [
-                  const Color(0xFF1A1F3A).withOpacity(0.7),
-                  const Color(0xFF1A1F3A).withOpacity(0.5),
-                ]
-              : [Colors.white, Colors.white.withOpacity(0.9)],
-        ),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
-            blurRadius: 15,
-            spreadRadius: 1,
+    final totalCount = widget.totalWords + widget.totalExpressions;
+    final hasStats = totalCount > 0;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: widget.isDark
+                ? [
+                    const Color(0xFF1A1F3A).withOpacity(0.7),
+                    const Color(0xFF1A1F3A).withOpacity(0.5),
+                  ]
+                : [Colors.white, Colors.white.withOpacity(0.9)],
           ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            context.push('/vocabulary/${Uri.encodeComponent(galaxyName)}/${Uri.encodeComponent(subtopic.name)}');
-          },
           borderRadius: BorderRadius.circular(15),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.circle,
-                  size: 50,
-                  color: Theme.of(context).colorScheme.secondary,
-                  shadows: [
-                    Shadow(
-                      color: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
-                      blurRadius: 15,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  subtopic.name,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.secondary,
+          border: Border.all(
+            color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+              blurRadius: 15,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              context.push('/vocabulary/${Uri.encodeComponent(widget.galaxyName)}/${Uri.encodeComponent(widget.subtopic.name)}');
+            },
+            borderRadius: BorderRadius.circular(15),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Иконка подтемы
+                  Text(
+                    widget.subtopic.icon,
+                    style: const TextStyle(fontSize: 40),
                   ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  
+                  // Название подтемы
+                  Text(
+                    widget.subtopic.name,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.secondary,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  
+                  // Статистика (показывается всегда на мобильном, при hover на десктопе)
+                  if (!widget.isLoadingStats && hasStats)
+                    AnimatedOpacity(
+                      opacity: _isHovered || MediaQuery.of(context).size.width < 600 ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 200),
+                      child: Container(
+                        margin: const EdgeInsets.only(top: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: widget.isDark
+                              ? Colors.white.withOpacity(0.1)
+                              : Colors.black.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Column(
+                          children: [
+                            if (widget.totalWords > 0)
+                              Text(
+                                '📚 ${widget.totalWords} mot${widget.totalWords > 1 ? 's' : ''}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: widget.isDark ? Colors.white70 : Colors.black54,
+                                ),
+                              ),
+                            if (widget.totalExpressions > 0)
+                              Text(
+                                '💬 ${widget.totalExpressions} expr.',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: widget.isDark ? Colors.white70 : Colors.black54,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
