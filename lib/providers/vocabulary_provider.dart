@@ -75,6 +75,18 @@ class VocabularyProvider with ChangeNotifier {
     }
   }
   
+  Future<void> deleteWord(int wordId) async {
+    try {
+      await _apiService.deleteWord(wordId);
+      _words.removeWhere((word) => word.id == wordId);
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   Future<String> recognizeSpeech(String audioPath) async {
     try {
       return await _apiService.recognizeSpeech(audioPath);

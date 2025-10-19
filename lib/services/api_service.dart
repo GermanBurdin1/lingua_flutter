@@ -317,6 +317,25 @@ class ApiService {
     }
   }
 
+  // Удалить слово
+  Future<void> deleteWord(int wordId) async {
+    await loadTokens();
+
+    final response = await http.delete(
+      Uri.parse('$vocabularyBaseUrl/lexicon/$wordId'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 204) {
+      return;
+    } else if (response.statusCode == 401) {
+      await refreshAccessToken();
+      return deleteWord(wordId);
+    } else {
+      throw Exception('Ошибка удаления слова');
+    }
+  }
+
   // Распознать речь
   Future<String> recognizeSpeech(String audioPath) async {
     await loadTokens();

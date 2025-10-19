@@ -7,14 +7,18 @@ import '../widgets/cosmic_background.dart';
 
 class AddWordScreen extends StatefulWidget {
   final String? initialWord;
+  final String? initialTranslation;
   final String? initialGalaxy;
   final String? initialSubtopic;
+  final int? wordId; // ID для редактирования
 
   const AddWordScreen({
     super.key,
     this.initialWord,
+    this.initialTranslation,
     this.initialGalaxy,
     this.initialSubtopic,
+    this.wordId,
   });
 
   @override
@@ -107,6 +111,14 @@ class _AddWordScreenState extends State<AddWordScreen> {
       return;
     }
 
+    // Проверка: если нет перевода, показываем предупреждение
+    if (_translationController.text.trim().isEmpty) {
+      final confirmed = await _showNoTranslationWarning();
+      if (!confirmed) {
+        return; // Пользователь отменил
+      }
+    }
+
     setState(() => _isLoading = true);
 
     try {
@@ -141,6 +153,63 @@ class _AddWordScreenState extends State<AddWordScreen> {
     }
   }
 
+  Future<bool> _showNoTranslationWarning() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        final themeProvider = context.watch<ThemeProvider>();
+        final isDark = themeProvider.isDarkMode;
+        
+        return AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF1A1F3A) : Colors.white,
+          title: Row(
+            children: [
+              const Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.orange,
+                size: 28,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Attention',
+                style: TextStyle(
+                  color: isDark ? const Color(0xFF00F5FF) : const Color(0xFF0066FF),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'Vous allez ajouter ce mot sans traduction.\n\nVous pourrez ajouter la traduction plus tard.',
+            style: TextStyle(
+              color: isDark ? Colors.white70 : Colors.black87,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(
+                'Annuler',
+                style: TextStyle(
+                  color: isDark ? Colors.white60 : Colors.black54,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Continuer sans traduction'),
+            ),
+          ],
+        );
+      },
+    );
+    return result ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
@@ -148,24 +217,26 @@ class _AddWordScreenState extends State<AddWordScreen> {
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          'Ajouter ${_selectedType == "word" ? "un mot" : "une expression"}',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                shadows: isDark
-                    ? [
-                        const Shadow(
-                          offset: Offset(0, 0),
-                          blurRadius: 10.0,
-                          color: Color(0xFF00F5FF),
-                        ),
-                      ]
-                    : [],
-              ),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: Text(
+            widget.wordId != null 
+                ? 'Modifier ${_selectedType == "word" ? "le mot" : "l\'expression"}'
+                : 'Ajouter ${_selectedType == "word" ? "un mot" : "une expression"}',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  shadows: isDark
+                      ? [
+                          const Shadow(
+                            offset: Offset(0, 0),
+                            blurRadius: 10.0,
+                            color: Color(0xFF00F5FF),
+                          ),
+                        ]
+                      : [],
+                ),
+          ),
         ),
-      ),
       body: CosmicBackground(
         isDark: isDark,
         child: SafeArea(
@@ -390,16 +461,10 @@ class _AddWordScreenState extends State<AddWordScreen> {
                     ),
                   const SizedBox(height: 32),
 
-                  // Save button
-                  ElevatedButton(
+                  // Save/Update button
+                  ElevatedButton.icon(
                     onPressed: _isLoading ? null : _saveWord,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.all(16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: _isLoading
+                    icon: _isLoading
                         ? const SizedBox(
                             height: 20,
                             width: 20,
@@ -409,10 +474,17 @@ class _AddWordScreenState extends State<AddWordScreen> {
                                   AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           )
-                        : const Text(
-                            'Ajouter',
-                            style: TextStyle(fontSize: 18),
-                          ),
+                        : Icon(widget.wordId != null ? Icons.check : Icons.add),
+                    label: Text(
+                      widget.wordId != null ? 'Enregistrer' : 'Ajouter',
+                      style: const TextStyle(fontSize: 18),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.all(16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
                 ],
               ),

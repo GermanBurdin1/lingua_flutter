@@ -5,6 +5,7 @@ import '../providers/vocabulary_provider.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/voice_recorder.dart';
 import '../widgets/cosmic_background.dart';
+import '../models/word.dart';
 
 class VocabularyScreen extends StatefulWidget {
   final String? galaxyName;
@@ -35,111 +36,260 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
   }
 
   void _handleWordRecorded(String word) async {
-    if (word.isEmpty) {
-      _showManualInputDialog();
-      return;
+    // Открываем форму add_word с предзаполненным словом
+    final result = await context.push<bool>(
+      '/add-word',
+      extra: {
+        'word': word,
+        'galaxy': widget.galaxyName,
+        'subtopic': widget.subtopicName,
+      },
+    );
+
+    // Если слово добавлено, обновляем список
+    if (result == true && mounted) {
+      context.read<VocabularyProvider>().fetchWords(
+        galaxy: widget.galaxyName,
+        subtopic: widget.subtopicName,
+      );
     }
+  }
+
+  void _openAddWordForm() async {
+    // Открываем форму add_word
+    final result = await context.push<bool>(
+      '/add-word',
+      extra: {
+        'galaxy': widget.galaxyName,
+        'subtopic': widget.subtopicName,
+      },
+    );
+
+    // Если слово добавлено, обновляем список
+    if (result == true && mounted) {
+      context.read<VocabularyProvider>().fetchWords(
+        galaxy: widget.galaxyName,
+        subtopic: widget.subtopicName,
+      );
+    }
+  }
+
+  void _showWordDetailsModal(Word word) {
+    final themeProvider = context.read<ThemeProvider>();
+    final isDark = themeProvider.isDarkMode;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF1A1F3A) : Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Icon(
+                Icons.book,
+                color: isDark ? const Color(0xFF00F5FF) : const Color(0xFF0066FF),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  word.word,
+                  style: TextStyle(
+                    color: isDark ? const Color(0xFF00F5FF) : const Color(0xFF0066FF),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (word.translation != null) ...[
+                  Text(
+                    'Traduction',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white70 : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    word.translation!,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ] else ...[
+                  Text(
+                    '⚠️ Pas de traduction',
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                if (word.galaxy != null) ...[
+                  Text(
+                    'Galaxie',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white70 : Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    word.galaxy!,
+                    style: TextStyle(
+                      color: isDark ? Colors.white60 : Colors.black54,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                if (word.subtopic != null) ...[
+                  Text(
+                    'Sous-thème',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white70 : Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    word.subtopic!,
+                    style: TextStyle(
+                      color: isDark ? Colors.white60 : Colors.black54,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                'Fermer',
+                style: TextStyle(
+                  color: isDark ? Colors.white60 : Colors.black54,
+                ),
+              ),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                _editWord(word);
+              },
+              icon: const Icon(Icons.edit, size: 18),
+              label: const Text('Modifier'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isDark ? const Color(0xFF00F5FF) : const Color(0xFF0066FF),
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _editWord(Word word) async {
+    // Открываем форму редактирования с предзаполненными данными
+    final result = await context.push<bool>(
+      '/add-word',
+      extra: {
+        'word': word.word,
+        'translation': word.translation,
+        'galaxy': word.galaxy ?? widget.galaxyName,
+        'subtopic': word.subtopic ?? widget.subtopicName,
+        'wordId': word.id, // Передаем ID для редактирования
+      },
+    );
+
+    // Если изменения сохранены, обновляем список
+    if (result == true && mounted) {
+      context.read<VocabularyProvider>().fetchWords(
+        galaxy: widget.galaxyName,
+        subtopic: widget.subtopicName,
+      );
+    }
+  }
+
+  void _deleteWord(Word word) async {
+    final themeProvider = context.read<ThemeProvider>();
+    final isDark = themeProvider.isDarkMode;
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Reconnu'),
-        content: Text('Mot: "$word"\n\nAjouter au vocabulaire?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Annuler'),
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF1A1F3A) : Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              const Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.red,
+                size: 28,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Confirmer',
+                style: TextStyle(
+                  color: isDark ? const Color(0xFFFF6B9D) : Colors.redAccent,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context, false);
-              _showManualInputDialog(initialValue: word);
-            },
-            child: const Text('Modifier'),
+          content: Text(
+            'Voulez-vous vraiment supprimer le mot "${word.word}" ?',
+            style: TextStyle(
+              color: isDark ? Colors.white70 : Colors.black87,
+            ),
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Ajouter'),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(
+                'Annuler',
+                style: TextStyle(
+                  color: isDark ? Colors.white60 : Colors.black54,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Supprimer'),
+            ),
+          ],
+        );
+      },
     );
 
     if (confirmed == true && mounted) {
       try {
-        await context.read<VocabularyProvider>().addWord(
-              word: word,
-              sourceLang: 'fr',
-              targetLang: 'ru',
-            );
+        await context.read<VocabularyProvider>().deleteWord(word.id);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Mot "$word" ajouté!')),
+            const SnackBar(content: Text('✅ Mot supprimé!')),
           );
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Erreur d\'ajout du mot')),
+            SnackBar(content: Text('❌ Erreur: $e')),
           );
         }
       }
     }
-  }
-
-  void _showManualInputDialog({String? initialValue}) {
-    final controller = TextEditingController(text: initialValue);
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Ajouter un mot'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            hintText: 'Entrez le mot',
-            border: OutlineInputBorder(),
-          ),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final word = controller.text.trim();
-              if (word.isEmpty) return;
-              
-              Navigator.pop(context);
-              
-              try {
-                await context.read<VocabularyProvider>().addWord(
-                      word: word,
-                      sourceLang: 'fr',
-                      targetLang: 'ru',
-                      galaxy: widget.galaxyName ?? '',
-                      subtopic: widget.subtopicName ?? '',
-                    );
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Mot "$word" ajouté!')),
-                  );
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Erreur d\'ajout du mot')),
-                  );
-                }
-              }
-            },
-            child: const Text('Ajouter'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -190,7 +340,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                     ],
                   ),
                   child: ElevatedButton.icon(
-                    onPressed: _showManualInputDialog,
+                    onPressed: _openAddWordForm,
                     icon: const Icon(Icons.add),
                     label: const Text('Ajouter un mot manuellement'),
                     style: ElevatedButton.styleFrom(
@@ -295,11 +445,32 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                               ),
                               subtitle: word.translation != null
                                   ? Text(word.translation!)
-                                  : null,
-                              trailing: const Icon(Icons.chevron_right),
-                              onTap: () {
-                                context.push('/word/${word.id}');
-                              },
+                                  : Text(
+                                      'Pas de traduction',
+                                      style: TextStyle(
+                                        color: themeProvider.isDarkMode
+                                            ? Colors.orange.withOpacity(0.7)
+                                            : Colors.orange,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit, size: 20),
+                                    onPressed: () => _editWord(word),
+                                    tooltip: 'Modifier',
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete, size: 20),
+                                    onPressed: () => _deleteWord(word),
+                                    tooltip: 'Supprimer',
+                                    color: Colors.red,
+                                  ),
+                                ],
+                              ),
+                              onTap: () => _showWordDetailsModal(word),
                             ),
                           );
                         },

@@ -97,17 +97,19 @@ final GoRouter _router = GoRouter(
         return WordDetailScreen(wordId: int.parse(id));
       },
     ),
-    GoRoute(
-      path: '/add-word',
-      builder: (context, state) {
-        final extra = state.extra as Map<String, dynamic>?;
-        return AddWordScreen(
-          initialWord: extra?['word'] as String?,
-          initialGalaxy: extra?['galaxy'] as String?,
-          initialSubtopic: extra?['subtopic'] as String?,
-        );
-      },
-    ),
+      GoRoute(
+        path: '/add-word',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return AddWordScreen(
+            initialWord: extra?['word'] as String?,
+            initialTranslation: extra?['translation'] as String?,
+            initialGalaxy: extra?['galaxy'] as String?,
+            initialSubtopic: extra?['subtopic'] as String?,
+            wordId: extra?['wordId'] as int?,
+          );
+        },
+      ),
   ],
 );
 
