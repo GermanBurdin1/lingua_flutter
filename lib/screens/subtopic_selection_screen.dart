@@ -22,11 +22,50 @@ class _SubtopicSelectionScreenState extends State<SubtopicSelectionScreen> {
   final ApiService _apiService = ApiService();
   Map<String, Map<String, int>> _stats = {};
   bool _isLoadingStats = true;
+  List<String> _customSubtopics = []; // Пользовательские подтемы
 
   @override
   void initState() {
     super.initState();
     _loadStats();
+  }
+
+  Future<void> _addCustomSubtopic() async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Ajouter un sous-thème'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Nom du sous-thème',
+            hintText: 'Ex: Cinéma français',
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (controller.text.trim().isNotEmpty) {
+                Navigator.pop(context, controller.text.trim());
+              }
+            },
+            child: const Text('Ajouter'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null && mounted) {
+      setState(() {
+        _customSubtopics.add(result);
+      });
+    }
   }
 
   Future<void> _loadStats() async {
@@ -61,6 +100,13 @@ class _SubtopicSelectionScreenState extends State<SubtopicSelectionScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         title: Text(galaxy.name.toUpperCase()),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline, size: 28),
+            onPressed: _addCustomSubtopic,
+            tooltip: 'Ajouter un sous-thème',
+          ),
+        ],
       ),
       body: CosmicBackground(
         isDark: themeProvider.isDarkMode,
@@ -134,9 +180,12 @@ class _SubtopicSelectionScreenState extends State<SubtopicSelectionScreen> {
                       mainAxisSpacing: 16,
                       childAspectRatio: 1.3,
                     ),
-                    itemCount: galaxy.subtopics.length,
+                    itemCount: galaxy.subtopics.length + _customSubtopics.length,
                     itemBuilder: (context, index) {
-                      final subtopic = galaxy.subtopics[index];
+                      final isCustom = index >= galaxy.subtopics.length;
+                      final subtopic = isCustom
+                          ? Subtopic(name: _customSubtopics[index - galaxy.subtopics.length], icon: '✨')
+                          : galaxy.subtopics[index];
                       final stats = _stats[subtopic.name];
                       return _SubtopicCard(
                         subtopic: subtopic,
@@ -149,6 +198,7 @@ class _SubtopicSelectionScreenState extends State<SubtopicSelectionScreen> {
                         translatedExpressions: stats?['translatedExpressions'] ?? 0,
                         untranslatedExpressions: stats?['untranslatedExpressions'] ?? 0,
                         isLoadingStats: _isLoadingStats,
+                        isCustom: isCustom,
                       );
                     },
                   ),
@@ -173,6 +223,7 @@ class _SubtopicCard extends StatefulWidget {
   final int translatedExpressions;
   final int untranslatedExpressions;
   final bool isLoadingStats;
+  final bool isCustom;
 
   const _SubtopicCard({
     required this.subtopic,
@@ -185,6 +236,7 @@ class _SubtopicCard extends StatefulWidget {
     required this.translatedExpressions,
     required this.untranslatedExpressions,
     required this.isLoadingStats,
+    this.isCustom = false,
   });
 
   @override

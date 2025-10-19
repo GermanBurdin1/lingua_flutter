@@ -365,16 +365,16 @@ class _MainScreenState extends State<MainScreen> {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 60),
-                      _MenuButton(
-                        icon: Icons.book,
-                        label: 'Vocabulaire',
-                        gradient: LinearGradient(
-                          colors: themeProvider.isDarkMode
-                              ? [const Color(0xFF00F5FF), const Color(0xFF00C2FF)]
-                              : [const Color(0xFF0066FF), const Color(0xFF0080FF)],
-                        ),
-                        onTap: () => context.push('/galaxies'),
-                      ),
+                            _MenuButton(
+                              icon: Icons.psychology,
+                              label: 'Contexte de Vie',
+                              gradient: LinearGradient(
+                                colors: themeProvider.isDarkMode
+                                    ? [const Color(0xFF00F5FF), const Color(0xFF00C2FF)]
+                                    : [const Color(0xFF0066FF), const Color(0xFF0080FF)],
+                              ),
+                              onTap: () => context.push('/galaxies'),
+                            ),
                       const SizedBox(height: 16),
                       _MenuButton(
                         icon: Icons.movie,

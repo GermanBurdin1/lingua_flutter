@@ -17,6 +17,8 @@ import 'screens/media_galaxy_selection_screen.dart';
 import 'screens/media_platform_selection_screen.dart';
 import 'screens/media_galaxy_themes_screen.dart';
 import 'screens/media_subtopic_selection_screen.dart';
+import 'screens/media_classification_mode_screen.dart';
+import 'screens/media_platform_content_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -120,10 +122,33 @@ final GoRouter _router = GoRouter(
         builder: (context, state) => const MediaGalaxySelectionScreen(),
       ),
       GoRoute(
+        path: '/platform-content/:mediaType/:platform',
+        builder: (context, state) {
+          final mediaType = Uri.decodeComponent(state.pathParameters['mediaType']!);
+          final platform = Uri.decodeComponent(state.pathParameters['platform']!);
+          return MediaPlatformContentScreen(
+            mediaType: mediaType,
+            platformName: platform,
+          );
+        },
+      ),
+      GoRoute(
         path: '/media-platforms/:mediaType',
         builder: (context, state) {
           final mediaType = state.pathParameters['mediaType']!;
           return MediaPlatformSelectionScreen(mediaType: mediaType);
+        },
+      ),
+      GoRoute(
+        path: '/media-content-list/:mediaType/:platform',
+        builder: (context, state) {
+          final mediaType = Uri.decodeComponent(state.pathParameters['mediaType']!);
+          final platform = Uri.decodeComponent(state.pathParameters['platform']!);
+          // TODO: Создать MediaContentListScreen
+          return Scaffold(
+            appBar: AppBar(title: Text('$platform - Contenu')),
+            body: const Center(child: Text('Liste des films/séries - en cours...')),
+          );
         },
       ),
       GoRoute(

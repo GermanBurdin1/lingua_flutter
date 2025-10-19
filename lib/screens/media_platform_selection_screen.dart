@@ -127,9 +127,9 @@ class _MediaPlatformSelectionScreenState extends State<MediaPlatformSelectionScr
                                       },
                                     ),
                                     onTap: () {
-                                      // Navigate to galaxy selection for this platform
+                                      // Navigate to platform content screen with toggler
                                       context.push(
-                                        '/media-themes/${Uri.encodeComponent(widget.mediaType)}/'
+                                        '/platform-content/${Uri.encodeComponent(widget.mediaType)}/'
                                         '${Uri.encodeComponent(platform.name)}',
                                       );
                                     },
