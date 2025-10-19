@@ -47,8 +47,12 @@ class MyApp extends StatelessWidget {
 }
 
 final GoRouter _router = GoRouter(
-  initialLocation: '/login',
+  initialLocation: '/splash',
   routes: [
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
@@ -107,7 +111,7 @@ final GoRouter _router = GoRouter(
   ],
 );
 
-// Splash Screen для проверки авторизации
+// Splash Screen для автоматической проверки авторизации
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 

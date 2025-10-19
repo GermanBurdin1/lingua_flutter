@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../widgets/cosmic_background.dart';
@@ -20,6 +21,31 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedEmail = prefs.getString('saved_email');
+    final savedPassword = prefs.getString('saved_password');
+    
+    if (savedEmail != null) {
+      _emailController.text = savedEmail;
+    }
+    if (savedPassword != null) {
+      _passwordController.text = savedPassword;
+    }
+  }
+
+  Future<void> _saveCredentials(String email, String password) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('saved_email', email);
+    await prefs.setString('saved_password', password);
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
@@ -32,16 +58,20 @@ class _LoginScreenState extends State<LoginScreen> {
       print('📝 Form validated, attempting login...');
       try {
         final authProvider = context.read<AuthProvider>();
-        await authProvider.login(
-              _emailController.text.trim(),
-              _passwordController.text,
-            );
+        final email = _emailController.text.trim();
+        final password = _passwordController.text;
+        
+        await authProvider.login(email, password);
         
         print('✅ Login completed');
         print('🔒 isAuthenticated: ${authProvider.isAuthenticated}');
         print('👤 currentUser: ${authProvider.currentUser?.email}');
         
         if (authProvider.isAuthenticated) {
+          // Сохраняем credentials для быстрого повторного входа
+          await _saveCredentials(email, password);
+          print('💾 Credentials saved for quick re-login');
+          
           print('🚀 Scheduling navigation to /main');
           // Используем addPostFrameCallback - гарантированно выполнится после текущего фрейма
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -183,7 +213,28 @@ class _LoginScreenState extends State<LoginScreen> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 16),
+                        // Auto-save info
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.check_circle,
+                              size: 16,
+                              color: isDark ? const Color(0xFF00FF88) : const Color(0xFF00C853),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Votre connexion sera sauvegardée automatiquement',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: isDark ? Colors.white60 : Colors.black54,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(

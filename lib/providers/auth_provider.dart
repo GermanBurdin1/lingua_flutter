@@ -115,7 +115,7 @@ class AuthProvider with ChangeNotifier {
     }
   }
   
-  // Выход
+  // Выход (удаляем только JWT токены, сохраненные credentials остаются для быстрого повторного входа)
   Future<void> logout() async {
     await _apiService.clearTokens();
     _isAuthenticated = false;
