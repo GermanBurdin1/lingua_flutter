@@ -55,6 +55,86 @@ class _AddWordScreenState extends State<AddWordScreen> {
   bool _isLoading = false;
   bool _isManualTranslation = false;
   bool _hasContentTitle = false; // Для динамического показа дополнительных полей
+  
+  // Списки жанров для каждого типа медиа
+  static const List<String> _filmGenres = [
+    'Action',
+    'Adventure',
+    'Animation',
+    'Comedy',
+    'Crime',
+    'Documentary',
+    'Drama',
+    'Fantasy',
+    'Horror',
+    'Musical',
+    'Mystery',
+    'Romance',
+    'Sci-Fi',
+    'Thriller',
+    'War',
+    'Western',
+  ];
+  
+  static const List<String> _seriesGenres = [
+    'Action',
+    'Comedy',
+    'Crime',
+    'Documentary',
+    'Drama',
+    'Fantasy',
+    'Horror',
+    'Mystery',
+    'Romance',
+    'Sci-Fi',
+    'Thriller',
+    'Western',
+    'Animation',
+    'Adventure',
+    'Historical',
+    'Legal',
+  ];
+  
+  static const List<String> _musicGenres = [
+    'Pop',
+    'Rock',
+    'Hip-Hop',
+    'Rap',
+    'Jazz',
+    'Classical',
+    'Electronic',
+    'R&B',
+    'Country',
+    'Folk',
+    'Blues',
+    'Reggae',
+    'Metal',
+    'Indie',
+    'Alternative',
+    'Latin',
+  ];
+  
+  static const List<String> _podcastGenres = [
+    'True Crime',
+    'Educational',
+    'Comedy',
+    'News',
+    'Technology',
+    'Business',
+    'Health',
+    'History',
+    'Science',
+    'Politics',
+    'Entertainment',
+    'Sports',
+    'Self-Improvement',
+    'Storytelling',
+    'Interview',
+    'Documentary',
+  ];
+  
+  List<String> _availableGenres = [];
+  String? _selectedGenre;
 
   @override
   void initState() {
@@ -69,6 +149,89 @@ class _AddWordScreenState extends State<AddWordScreen> {
     }
     _selectedGalaxy = widget.initialGalaxy;
     _selectedSubtopic = widget.initialSubtopic;
+    
+    // Инициализируем список жанров в зависимости от типа медиа
+    _updateGenreList();
+  }
+  
+  void _updateGenreList() {
+    switch (widget.mediaType) {
+      case 'films':
+        _availableGenres = List.from(_filmGenres);
+        break;
+      case 'series':
+        _availableGenres = List.from(_seriesGenres);
+        break;
+      case 'music':
+        _availableGenres = List.from(_musicGenres);
+        break;
+      case 'podcasts':
+        _availableGenres = List.from(_podcastGenres);
+        break;
+      default:
+        _availableGenres = [];
+    }
+  }
+  
+  Future<void> _addCustomGenre() async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        final themeProvider = context.watch<ThemeProvider>();
+        final isDark = themeProvider.isDarkMode;
+        
+        return AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF1A1F3A) : Colors.white,
+          title: Text(
+            'Ajouter un genre',
+            style: TextStyle(
+              color: isDark ? const Color(0xFF00F5FF) : const Color(0xFF0066FF),
+            ),
+          ),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: InputDecoration(
+              labelText: 'Nom du genre',
+              hintText: 'Ex: Nouveau genre',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            style: TextStyle(
+              color: isDark ? Colors.white70 : Colors.black87,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Annuler',
+                style: TextStyle(
+                  color: isDark ? Colors.white60 : Colors.black54,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (controller.text.trim().isNotEmpty) {
+                  Navigator.pop(context, controller.text.trim());
+                }
+              },
+              child: const Text('Ajouter'),
+            ),
+          ],
+        );
+      },
+    );
+    
+    if (result != null && mounted && result.trim().isNotEmpty) {
+      setState(() {
+        _availableGenres.add(result.trim());
+        _selectedGenre = result.trim();
+      });
+    }
   }
 
   @override
@@ -222,9 +385,9 @@ class _AddWordScreenState extends State<AddWordScreen> {
               timestamp: _timestampController.text.trim().isNotEmpty
                   ? _timestampController.text.trim()
                   : null,
-              genre: _genreController.text.trim().isNotEmpty
-                  ? _genreController.text.trim()
-                  : null,
+              genre: _selectedGenre != null && _selectedGenre!.isNotEmpty
+                  ? _selectedGenre
+                  : (_genreController.text.trim().isNotEmpty ? _genreController.text.trim() : null),
               year: _yearController.text.trim().isNotEmpty
                   ? int.tryParse(_yearController.text.trim())
                   : null,
@@ -272,9 +435,9 @@ class _AddWordScreenState extends State<AddWordScreen> {
               timestamp: _timestampController.text.trim().isNotEmpty
                   ? _timestampController.text.trim()
                   : null,
-              genre: _genreController.text.trim().isNotEmpty
-                  ? _genreController.text.trim()
-                  : null,
+              genre: _selectedGenre != null && _selectedGenre!.isNotEmpty
+                  ? _selectedGenre
+                  : (_genreController.text.trim().isNotEmpty ? _genreController.text.trim() : null),
               year: _yearController.text.trim().isNotEmpty
                   ? int.tryParse(_yearController.text.trim())
                   : null,
@@ -651,18 +814,52 @@ class _AddWordScreenState extends State<AddWordScreen> {
                   if (widget.mediaType != null && widget.wordId == null && 
                       (widget.mediaContentTitle != null || _hasContentTitle)) ...[
                     // Дополнительные поля в зависимости от типа медиа
-                    // Для films и series: жанр, год, режиссер
+                    // Для films и series: жанр (выпадающий список), год, режиссер
                     if (widget.mediaType == 'films' || widget.mediaType == 'series') ...[
-                      TextFormField(
-                        controller: _genreController,
-                        decoration: InputDecoration(
-                          labelText: 'Genre (optionnel)',
-                          hintText: 'Ex: Action, Drama, Comedy',
-                          prefixIcon: const Icon(Icons.category),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: _selectedGenre,
+                              decoration: InputDecoration(
+                                labelText: 'Genre (optionnel)',
+                                prefixIcon: const Icon(Icons.category),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              items: [
+                                ..._availableGenres.map((genre) => DropdownMenuItem(
+                                  value: genre,
+                                  child: Text(genre),
+                                )),
+                                const DropdownMenuItem(
+                                  value: '__custom__',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.add, size: 18),
+                                      SizedBox(width: 8),
+                                      Text('Ajouter un genre...'),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                if (!mounted) return;
+                                if (value == '__custom__') {
+                                  _addCustomGenre();
+                                } else {
+                                  setState(() {
+                                    _selectedGenre = value;
+                                    if (value != null) {
+                                      _genreController.text = value;
+                                    }
+                                  });
+                                }
+                              },
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                       const SizedBox(height: 16),
                       Row(
@@ -700,8 +897,54 @@ class _AddWordScreenState extends State<AddWordScreen> {
                       const SizedBox(height: 16),
                     ],
                     
-                    // Для podcasts: ведущий, приглашенные
+                    // Для podcasts: жанр (выпадающий список), ведущий, приглашенные
                     if (widget.mediaType == 'podcasts') ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: _selectedGenre,
+                              decoration: InputDecoration(
+                                labelText: 'Genre (optionnel)',
+                                prefixIcon: const Icon(Icons.category),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              items: [
+                                ..._availableGenres.map((genre) => DropdownMenuItem(
+                                  value: genre,
+                                  child: Text(genre),
+                                )),
+                                const DropdownMenuItem(
+                                  value: '__custom__',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.add, size: 18),
+                                      SizedBox(width: 8),
+                                      Text('Ajouter un genre...'),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                if (!mounted) return;
+                                if (value == '__custom__') {
+                                  _addCustomGenre();
+                                } else {
+                                  setState(() {
+                                    _selectedGenre = value;
+                                    if (value != null) {
+                                      _genreController.text = value;
+                                    }
+                                  });
+                                }
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
                       TextFormField(
                         controller: _hostController,
                         decoration: InputDecoration(
@@ -741,8 +984,54 @@ class _AddWordScreenState extends State<AddWordScreen> {
                       const SizedBox(height: 16),
                     ],
                     
-                    // Для music: альбом, год
+                    // Для music: жанр (выпадающий список), альбом, год
                     if (widget.mediaType == 'music') ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: _selectedGenre,
+                              decoration: InputDecoration(
+                                labelText: 'Genre (optionnel)',
+                                prefixIcon: const Icon(Icons.category),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              items: [
+                                ..._availableGenres.map((genre) => DropdownMenuItem(
+                                  value: genre,
+                                  child: Text(genre),
+                                )),
+                                const DropdownMenuItem(
+                                  value: '__custom__',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.add, size: 18),
+                                      SizedBox(width: 8),
+                                      Text('Ajouter un genre...'),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                if (!mounted) return;
+                                if (value == '__custom__') {
+                                  _addCustomGenre();
+                                } else {
+                                  setState(() {
+                                    _selectedGenre = value;
+                                    if (value != null) {
+                                      _genreController.text = value;
+                                    }
+                                  });
+                                }
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
                       TextFormField(
                         controller: _albumController,
                         decoration: InputDecoration(
