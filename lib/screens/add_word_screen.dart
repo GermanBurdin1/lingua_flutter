@@ -135,7 +135,7 @@ class _AddWordScreenState extends State<AddWordScreen> {
   ];
   
   List<String> _availableGenres = [];
-  String? _selectedGenre;
+  Set<String> _selectedGenres = {}; // Множественный выбор жанров
 
   @override
   void initState() {
@@ -229,8 +229,11 @@ class _AddWordScreenState extends State<AddWordScreen> {
     
     if (result != null && mounted && result.trim().isNotEmpty) {
       setState(() {
-        _availableGenres.add(result.trim());
-        _selectedGenre = result.trim();
+        final genre = result.trim();
+        if (!_availableGenres.contains(genre)) {
+          _availableGenres.add(genre);
+        }
+        _selectedGenres.add(genre);
       });
     }
   }
@@ -390,9 +393,9 @@ class _AddWordScreenState extends State<AddWordScreen> {
               timestamp: _timestampController.text.trim().isNotEmpty
                   ? _timestampController.text.trim()
                   : null,
-              genre: _selectedGenre != null && _selectedGenre!.isNotEmpty
-                  ? _selectedGenre
-                  : (_genreController.text.trim().isNotEmpty ? _genreController.text.trim() : null),
+              genres: _selectedGenres.isNotEmpty
+                  ? _selectedGenres.toList()
+                  : null,
               year: _yearController.text.trim().isNotEmpty
                   ? int.tryParse(_yearController.text.trim())
                   : null,
@@ -440,9 +443,9 @@ class _AddWordScreenState extends State<AddWordScreen> {
               timestamp: _timestampController.text.trim().isNotEmpty
                   ? _timestampController.text.trim()
                   : null,
-              genre: _selectedGenre != null && _selectedGenre!.isNotEmpty
-                  ? _selectedGenre
-                  : (_genreController.text.trim().isNotEmpty ? _genreController.text.trim() : null),
+              genres: _selectedGenres.isNotEmpty
+                  ? _selectedGenres.toList()
+                  : null,
               year: _yearController.text.trim().isNotEmpty
                   ? int.tryParse(_yearController.text.trim())
                   : null,
@@ -819,56 +822,54 @@ class _AddWordScreenState extends State<AddWordScreen> {
                   if (widget.mediaType != null && widget.wordId == null && 
                       (widget.mediaContentTitle != null || _hasContentTitle)) ...[
                     // Дополнительные поля в зависимости от типа медиа
-                    // Для films и series: жанр (выпадающий список), год, режиссер
+                    // Для films и series: жанры (множественный выбор), год, режиссер
                     if (widget.mediaType == 'films' || widget.mediaType == 'series') ...[
-                      Row(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: DropdownButtonFormField<String>(
-                              value: _selectedGenre != null && _availableGenres.contains(_selectedGenre)
-                                  ? _selectedGenre
-                                  : null,
-                              decoration: InputDecoration(
-                                labelText: 'Genre (optionnel)',
-                                prefixIcon: const Icon(Icons.category),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                          Row(
+                            children: [
+                              const Icon(Icons.category, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Genres (optionnel)',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
-                              items: [
-                                const DropdownMenuItem<String>(
-                                  value: null,
-                                  child: Text('Aucun'),
-                                ),
-                                ..._availableGenres.map((genre) => DropdownMenuItem(
-                                  value: genre,
-                                  child: Text(genre),
-                                )),
-                                const DropdownMenuItem(
-                                  value: '__custom__',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.add, size: 18),
-                                      SizedBox(width: 8),
-                                      Text('Ajouter un genre...'),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                              onChanged: (value) {
-                                if (!mounted) return;
-                                if (value == '__custom__') {
-                                  _addCustomGenre();
-                                } else {
-                                  setState(() {
-                                    _selectedGenre = value;
-                                    if (value != null) {
-                                      _genreController.text = value;
-                                    }
-                                  });
-                                }
-                              },
-                            ),
+                              const Spacer(),
+                              IconButton(
+                                icon: const Icon(Icons.add_circle_outline, size: 20),
+                                onPressed: _addCustomGenre,
+                                tooltip: 'Ajouter un genre',
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              ..._availableGenres.map((genre) {
+                                final isSelected = _selectedGenres.contains(genre);
+                                return FilterChip(
+                                  label: Text(genre),
+                                  selected: isSelected,
+                                  onSelected: (selected) {
+                                    if (!mounted) return;
+                                    setState(() {
+                                      if (selected) {
+                                        _selectedGenres.add(genre);
+                                      } else {
+                                        _selectedGenres.remove(genre);
+                                      }
+                                    });
+                                  },
+                                );
+                              }),
+                            ],
                           ),
                         ],
                       ),
@@ -908,56 +909,54 @@ class _AddWordScreenState extends State<AddWordScreen> {
                       const SizedBox(height: 16),
                     ],
                     
-                    // Для podcasts: жанр (выпадающий список), ведущий, приглашенные
+                    // Для podcasts: жанры (множественный выбор), ведущий, приглашенные
                     if (widget.mediaType == 'podcasts') ...[
-                      Row(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: DropdownButtonFormField<String>(
-                              value: _selectedGenre != null && _availableGenres.contains(_selectedGenre)
-                                  ? _selectedGenre
-                                  : null,
-                              decoration: InputDecoration(
-                                labelText: 'Genre (optionnel)',
-                                prefixIcon: const Icon(Icons.category),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                          Row(
+                            children: [
+                              const Icon(Icons.category, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Genres (optionnel)',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
-                              items: [
-                                const DropdownMenuItem<String>(
-                                  value: null,
-                                  child: Text('Aucun'),
-                                ),
-                                ..._availableGenres.map((genre) => DropdownMenuItem(
-                                  value: genre,
-                                  child: Text(genre),
-                                )),
-                                const DropdownMenuItem(
-                                  value: '__custom__',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.add, size: 18),
-                                      SizedBox(width: 8),
-                                      Text('Ajouter un genre...'),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                              onChanged: (value) {
-                                if (!mounted) return;
-                                if (value == '__custom__') {
-                                  _addCustomGenre();
-                                } else {
-                                  setState(() {
-                                    _selectedGenre = value;
-                                    if (value != null) {
-                                      _genreController.text = value;
-                                    }
-                                  });
-                                }
-                              },
-                            ),
+                              const Spacer(),
+                              IconButton(
+                                icon: const Icon(Icons.add_circle_outline, size: 20),
+                                onPressed: _addCustomGenre,
+                                tooltip: 'Ajouter un genre',
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              ..._availableGenres.map((genre) {
+                                final isSelected = _selectedGenres.contains(genre);
+                                return FilterChip(
+                                  label: Text(genre),
+                                  selected: isSelected,
+                                  onSelected: (selected) {
+                                    if (!mounted) return;
+                                    setState(() {
+                                      if (selected) {
+                                        _selectedGenres.add(genre);
+                                      } else {
+                                        _selectedGenres.remove(genre);
+                                      }
+                                    });
+                                  },
+                                );
+                              }),
+                            ],
                           ),
                         ],
                       ),
@@ -1001,56 +1000,54 @@ class _AddWordScreenState extends State<AddWordScreen> {
                       const SizedBox(height: 16),
                     ],
                     
-                    // Для music: жанр (выпадающий список), альбом, год
+                    // Для music: жанры (множественный выбор), альбом, год
                     if (widget.mediaType == 'music') ...[
-                      Row(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: DropdownButtonFormField<String>(
-                              value: _selectedGenre != null && _availableGenres.contains(_selectedGenre)
-                                  ? _selectedGenre
-                                  : null,
-                              decoration: InputDecoration(
-                                labelText: 'Genre (optionnel)',
-                                prefixIcon: const Icon(Icons.category),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                          Row(
+                            children: [
+                              const Icon(Icons.category, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Genres (optionnel)',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
-                              items: [
-                                const DropdownMenuItem<String>(
-                                  value: null,
-                                  child: Text('Aucun'),
-                                ),
-                                ..._availableGenres.map((genre) => DropdownMenuItem(
-                                  value: genre,
-                                  child: Text(genre),
-                                )),
-                                const DropdownMenuItem(
-                                  value: '__custom__',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.add, size: 18),
-                                      SizedBox(width: 8),
-                                      Text('Ajouter un genre...'),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                              onChanged: (value) {
-                                if (!mounted) return;
-                                if (value == '__custom__') {
-                                  _addCustomGenre();
-                                } else {
-                                  setState(() {
-                                    _selectedGenre = value;
-                                    if (value != null) {
-                                      _genreController.text = value;
-                                    }
-                                  });
-                                }
-                              },
-                            ),
+                              const Spacer(),
+                              IconButton(
+                                icon: const Icon(Icons.add_circle_outline, size: 20),
+                                onPressed: _addCustomGenre,
+                                tooltip: 'Ajouter un genre',
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              ..._availableGenres.map((genre) {
+                                final isSelected = _selectedGenres.contains(genre);
+                                return FilterChip(
+                                  label: Text(genre),
+                                  selected: isSelected,
+                                  onSelected: (selected) {
+                                    if (!mounted) return;
+                                    setState(() {
+                                      if (selected) {
+                                        _selectedGenres.add(genre);
+                                      } else {
+                                        _selectedGenres.remove(genre);
+                                      }
+                                    });
+                                  },
+                                );
+                              }),
+                            ],
                           ),
                         ],
                       ),

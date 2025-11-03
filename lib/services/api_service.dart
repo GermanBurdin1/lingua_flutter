@@ -265,6 +265,7 @@ class ApiService {
     int? episode,
     String? timestamp,
     String? genre,
+    List<String>? genres,
     int? year,
     String? director,
     String? host,
@@ -286,6 +287,7 @@ class ApiService {
       'episode': episode,
       'timestamp': timestamp,
       'genre': genre,
+      'genres': genres,
       'year': year,
       'director': director,
       'host': host,
@@ -342,6 +344,7 @@ class ApiService {
         episode: episode,
         timestamp: timestamp,
         genre: genre,
+        genres: genres,
         year: year,
         director: director,
         host: host,
@@ -409,6 +412,7 @@ class ApiService {
     int? episode,
     String? timestamp,
     String? genre,
+    List<String>? genres,
     int? year,
     String? director,
     String? host,
@@ -431,6 +435,7 @@ class ApiService {
     if (episode != null) body['episode'] = episode;
     if (timestamp != null) body['timestamp'] = timestamp;
     if (genre != null) body['genre'] = genre;
+    if (genres != null && genres.isNotEmpty) body['genres'] = genres;
     if (year != null) body['year'] = year;
     if (director != null) body['director'] = director;
     if (host != null) body['host'] = host;
@@ -485,6 +490,7 @@ class ApiService {
         episode: episode,
         timestamp: timestamp,
         genre: genre,
+        genres: genres,
         year: year,
         director: director,
         host: host,

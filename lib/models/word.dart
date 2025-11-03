@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class Word {
   final int id;
   final String word;
@@ -15,7 +17,22 @@ class Word {
   final int? episode; // Серия (для сериалов)
   final String? timestamp; // Временная метка: "12:34"
   // Дополнительные поля для медиа-контента
-  final String? genre; // Жанр (films/series)
+  final String? genre; // Жанр (films/series) - может быть JSON-строка с массивом
+  List<String>? get genres {
+    // Парсим genre как JSON если это массив, иначе возвращаем как список из одного элемента
+    if (genre == null || genre!.isEmpty) return null;
+    try {
+      // Пробуем распарсить как JSON массив
+      final decoded = jsonDecode(genre!);
+      if (decoded is List) {
+        return decoded.map((e) => e.toString()).toList();
+      }
+    } catch (e) {
+      // Если не JSON, возвращаем как список из одного элемента
+    }
+    // Если не JSON массив, возвращаем как список из одного элемента (для обратной совместимости)
+    return [genre!];
+  }
   final int? year; // Год выпуска (films/series/music)
   final String? director; // Режиссер (films/series)
   final String? host; // Ведущий (podcasts)

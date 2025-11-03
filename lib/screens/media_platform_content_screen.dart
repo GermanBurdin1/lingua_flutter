@@ -288,11 +288,11 @@ class _MediaPlatformContentScreenState extends State<MediaPlatformContentScreen>
                 
                 // Опциональные поля медиа-контента
                 // Жанры
-                if (firstWord.genre != null && firstWord.genre!.isNotEmpty) ...[
+                if (firstWord.genres != null && firstWord.genres!.isNotEmpty) ...[
                   _buildDetailRow(
                     icon: Icons.category,
                     label: 'Genres',
-                    value: firstWord.genre!,
+                    value: firstWord.genres!.join(', '),
                     isDark: isDark,
                   ),
                 ],
