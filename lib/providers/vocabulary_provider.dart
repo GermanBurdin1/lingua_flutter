@@ -19,19 +19,33 @@ class VocabularyProvider with ChangeNotifier {
     String? mediaType,
     String? mediaPlatform,
     String? mediaContentTitle,
+    String? sourceLang,
+    String? targetLang,
   }) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
     
     try {
-      _words = await _apiService.getLexicon(
+      final allWords = await _apiService.getLexicon(
         galaxy: galaxy,
         subtopic: subtopic,
         mediaType: mediaType,
         mediaPlatform: mediaPlatform,
         mediaContentTitle: mediaContentTitle,
       );
+      
+      // Фильтруем по языкам на клиенте (если параметры переданы)
+      if (sourceLang != null || targetLang != null) {
+        _words = allWords.where((word) {
+          final matchesSource = sourceLang == null || word.sourceLang == sourceLang;
+          final matchesTarget = targetLang == null || word.targetLang == targetLang;
+          return matchesSource && matchesTarget;
+        }).toList();
+      } else {
+        _words = allWords;
+      }
+      
       _isLoading = false;
       notifyListeners();
     } catch (e) {

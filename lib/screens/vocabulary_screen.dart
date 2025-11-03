@@ -29,19 +29,41 @@ class VocabularyScreen extends StatefulWidget {
 
 class _VocabularyScreenState extends State<VocabularyScreen> {
   bool _isVoiceActive = false;
+  String? _selectedSourceLang;
+  String? _selectedTargetLang;
+  
+  // Функция для получения названия языка
+  String _getLangName(String? langCode) {
+    switch (langCode) {
+      case 'fr':
+        return '🇫🇷 Français';
+      case 'ru':
+        return '🇷🇺 Русский';
+      case 'en':
+        return '🇬🇧 English';
+      default:
+        return langCode ?? 'Tous';
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     Future.microtask(() {
-      context.read<VocabularyProvider>().fetchWords(
-        galaxy: widget.galaxyName,
-        subtopic: widget.subtopicName,
-        mediaType: widget.mediaType,
-        mediaPlatform: widget.mediaPlatform,
-        mediaContentTitle: widget.mediaContentTitle,
-      );
+      _fetchWords();
     });
+  }
+  
+  Future<void> _fetchWords() async {
+    await context.read<VocabularyProvider>().fetchWords(
+      galaxy: widget.galaxyName,
+      subtopic: widget.subtopicName,
+      mediaType: widget.mediaType,
+      mediaPlatform: widget.mediaPlatform,
+      mediaContentTitle: widget.mediaContentTitle,
+      sourceLang: _selectedSourceLang,
+      targetLang: _selectedTargetLang,
+    );
   }
 
   void _handleWordRecorded(String word) async {
@@ -60,13 +82,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
 
     // Если слово добавлено, обновляем список
     if (result == true && mounted) {
-      context.read<VocabularyProvider>().fetchWords(
-        galaxy: widget.galaxyName,
-        subtopic: widget.subtopicName,
-        mediaType: widget.mediaType,
-        mediaPlatform: widget.mediaPlatform,
-        mediaContentTitle: widget.mediaContentTitle,
-      );
+      _fetchWords();
     }
   }
 
@@ -85,13 +101,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
 
     // Если слово добавлено, обновляем список
     if (result == true && mounted) {
-      context.read<VocabularyProvider>().fetchWords(
-        galaxy: widget.galaxyName,
-        subtopic: widget.subtopicName,
-        mediaType: widget.mediaType,
-        mediaPlatform: widget.mediaPlatform,
-        mediaContentTitle: widget.mediaContentTitle,
-      );
+      _fetchWords();
     }
   }
 
@@ -128,6 +138,69 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Отображение языков
+                Row(
+                  children: [
+                    Text(
+                      'Langues: ',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white70 : Colors.black87,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF00F5FF).withOpacity(0.2)
+                            : const Color(0xFF0066FF).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isDark
+                              ? const Color(0xFF00F5FF).withOpacity(0.3)
+                              : const Color(0xFF0066FF).withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _getLangName(word.sourceLang),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark
+                                  ? const Color(0xFF00F5FF)
+                                  : const Color(0xFF0066FF),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.arrow_forward,
+                            size: 12,
+                            color: isDark
+                                ? const Color(0xFF00F5FF)
+                                : const Color(0xFF0066FF),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _getLangName(word.targetLang),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark
+                                  ? const Color(0xFF00F5FF)
+                                  : const Color(0xFF0066FF),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 if (word.translation != null) ...[
                   Text(
                     'Traduction',
@@ -235,13 +308,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
 
     // Если изменения сохранены, обновляем список
     if (result == true && mounted) {
-      context.read<VocabularyProvider>().fetchWords(
-        galaxy: widget.galaxyName,
-        subtopic: widget.subtopicName,
-        mediaType: widget.mediaType,
-        mediaPlatform: widget.mediaPlatform,
-        mediaContentTitle: widget.mediaContentTitle,
-      );
+      _fetchWords();
     }
   }
 
@@ -386,6 +453,100 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
               
               const SizedBox(height: 16),
               
+              // Фильтры по языкам
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                          child: DropdownButton<String>(
+                            value: _selectedSourceLang,
+                            hint: const Text('De'),
+                            isExpanded: true,
+                            underline: const SizedBox(),
+                            items: [
+                              const DropdownMenuItem<String>(
+                                value: null,
+                                child: Text('Toutes les langues'),
+                              ),
+                              const DropdownMenuItem<String>(
+                                value: 'fr',
+                                child: Text('🇫🇷 Français'),
+                              ),
+                              const DropdownMenuItem<String>(
+                                value: 'ru',
+                                child: Text('🇷🇺 Русский'),
+                              ),
+                              const DropdownMenuItem<String>(
+                                value: 'en',
+                                child: Text('🇬🇧 English'),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedSourceLang = value;
+                              });
+                              _fetchWords();
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                          child: DropdownButton<String>(
+                            value: _selectedTargetLang,
+                            hint: const Text('Vers'),
+                            isExpanded: true,
+                            underline: const SizedBox(),
+                            items: [
+                              const DropdownMenuItem<String>(
+                                value: null,
+                                child: Text('Toutes les langues'),
+                              ),
+                              const DropdownMenuItem<String>(
+                                value: 'fr',
+                                child: Text('🇫🇷 Français'),
+                              ),
+                              const DropdownMenuItem<String>(
+                                value: 'ru',
+                                child: Text('🇷🇺 Русский'),
+                              ),
+                              const DropdownMenuItem<String>(
+                                value: 'en',
+                                child: Text('🇬🇧 English'),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedTargetLang = value;
+                              });
+                              _fetchWords();
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              const SizedBox(height: 16),
+              
               Expanded(
                 child: Consumer<VocabularyProvider>(
                   builder: (context, provider, child) {
@@ -428,7 +589,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                     }
 
                     return RefreshIndicator(
-                      onRefresh: () => provider.fetchWords(),
+                      onRefresh: () => _fetchWords(),
                       child: ListView.builder(
                         itemCount: provider.words.length,
                         padding: const EdgeInsets.all(16),
@@ -465,24 +626,84 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                               ],
                             ),
                             child: ListTile(
-                              title: Text(
-                                word.word,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              subtitle: word.translation != null
-                                  ? Text(word.translation!)
-                                  : Text(
-                                      'Pas de traduction',
-                                      style: TextStyle(
-                                        color: themeProvider.isDarkMode
-                                            ? Colors.orange.withOpacity(0.7)
-                                            : Colors.orange,
-                                        fontStyle: FontStyle.italic,
+                              title: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      word.word,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
+                                  ),
+                                  // Отображение языков
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: themeProvider.isDarkMode
+                                          ? const Color(0xFF00F5FF).withOpacity(0.2)
+                                          : const Color(0xFF0066FF).withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: themeProvider.isDarkMode
+                                            ? const Color(0xFF00F5FF).withOpacity(0.3)
+                                            : const Color(0xFF0066FF).withOpacity(0.3),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          _getLangName(word.sourceLang).split(' ')[0],
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: themeProvider.isDarkMode
+                                                ? const Color(0xFF00F5FF)
+                                                : const Color(0xFF0066FF),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Icon(
+                                          Icons.arrow_forward,
+                                          size: 12,
+                                          color: themeProvider.isDarkMode
+                                              ? const Color(0xFF00F5FF)
+                                              : const Color(0xFF0066FF),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          _getLangName(word.targetLang).split(' ')[0],
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: themeProvider.isDarkMode
+                                                ? const Color(0xFF00F5FF)
+                                                : const Color(0xFF0066FF),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              subtitle: Padding(
+                                padding: const EdgeInsets.only(top: 4.0),
+                                child: word.translation != null
+                                    ? Text(word.translation!)
+                                    : Text(
+                                        'Pas de traduction',
+                                        style: TextStyle(
+                                          color: themeProvider.isDarkMode
+                                              ? Colors.orange.withOpacity(0.7)
+                                              : Colors.orange,
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                      ),
+                              ),
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
