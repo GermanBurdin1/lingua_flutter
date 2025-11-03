@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../models/galaxy.dart';
+import '../models/word.dart';
 import '../providers/theme_provider.dart';
 import '../providers/vocabulary_provider.dart';
 import '../widgets/cosmic_background.dart';
@@ -26,6 +27,54 @@ class _MediaPlatformContentScreenState extends State<MediaPlatformContentScreen>
   List<String> _customThemes = []; // Пользовательские темы
   List<String> _contentList = []; // Список контента (фильмы/сериалы и т.д.)
   bool _isLoadingContent = false;
+  List<Word> _allWordsForFilters = []; // Все слова для заполнения фильтров
+  
+  // Фильтры для контента
+  String? _selectedGenre;
+  int? _selectedYear;
+  String? _selectedDirector;
+  String? _selectedHost;
+  String? _selectedAlbum;
+  
+  // Списки жанров
+  static const List<String> _filmGenres = [
+    'Action', 'Adventure', 'Animation', 'Comedy', 'Crime', 'Documentary',
+    'Drama', 'Fantasy', 'Horror', 'Musical', 'Mystery', 'Romance',
+    'Sci-Fi', 'Thriller', 'War', 'Western',
+  ];
+  
+  static const List<String> _seriesGenres = [
+    'Action', 'Comedy', 'Crime', 'Documentary', 'Drama', 'Fantasy',
+    'Horror', 'Mystery', 'Romance', 'Sci-Fi', 'Thriller', 'Western',
+    'Animation', 'Adventure', 'Historical', 'Legal',
+  ];
+  
+  static const List<String> _musicGenres = [
+    'Pop', 'Rock', 'Hip-Hop', 'Rap', 'Jazz', 'Classical', 'Electronic',
+    'R&B', 'Country', 'Folk', 'Blues', 'Reggae', 'Metal', 'Indie',
+    'Alternative', 'Latin',
+  ];
+  
+  static const List<String> _podcastGenres = [
+    'True Crime', 'Educational', 'Comedy', 'News', 'Technology', 'Business',
+    'Health', 'History', 'Science', 'Politics', 'Entertainment', 'Sports',
+    'Self-Improvement', 'Storytelling', 'Interview', 'Documentary',
+  ];
+  
+  List<String> get _availableGenres {
+    switch (widget.mediaType) {
+      case 'films':
+        return _filmGenres;
+      case 'series':
+        return _seriesGenres;
+      case 'music':
+        return _musicGenres;
+      case 'podcasts':
+        return _podcastGenres;
+      default:
+        return [];
+    }
+  }
 
   void _toggleMode() {
     setState(() {
@@ -34,15 +83,44 @@ class _MediaPlatformContentScreenState extends State<MediaPlatformContentScreen>
     
     // При переключении на режим "par contenu" загружаем список контентов
     if (!_isThemeMode) {
-      Future.microtask(() => _loadContentList());
+      Future.microtask(() {
+        _loadAllWordsForFilters();
+        _loadContentList();
+      });
+    }
+  }
+  
+  Future<void> _loadAllWordsForFilters() async {
+    if (!mounted) return;
+    
+    try {
+      // Загружаем все слова без фильтров для заполнения dropdown'ов фильтров
+      await context.read<VocabularyProvider>().fetchWords(
+        mediaType: widget.mediaType,
+        mediaPlatform: widget.platformName,
+      );
+      
+      if (mounted) {
+        setState(() {
+          _allWordsForFilters = context.read<VocabularyProvider>().words;
+        });
+      }
+    } catch (e) {
+      // Игнорируем ошибки, фильтры просто будут пустыми
     }
   }
 
   @override
   void initState() {
     super.initState();
-    // Загружаем список контентов при открытии экрана, если уже в режиме "par contenu"
+    // Если режим "par contenu" уже выбран, загружаем данные
     // Иначе загрузится при переключении через _toggleMode
+    if (!_isThemeMode) {
+      Future.microtask(() {
+        _loadAllWordsForFilters();
+        _loadContentList();
+      });
+    }
   }
 
   void _addNew() {
@@ -65,8 +143,9 @@ class _MediaPlatformContentScreenState extends State<MediaPlatformContentScreen>
       },
     );
     
-    // Если слово добавлено, обновляем список контентов
+    // Если слово добавлено, обновляем список контентов и фильтры
     if (result == true && mounted && !_isThemeMode) {
+      _loadAllWordsForFilters();
       _loadContentList();
     }
   }
@@ -79,20 +158,40 @@ class _MediaPlatformContentScreenState extends State<MediaPlatformContentScreen>
     });
     
     try {
-      // Загружаем все слова для данной платформы и типа медиа
+      // Загружаем все слова для данной платформы и типа медиа с фильтрами
       await context.read<VocabularyProvider>().fetchWords(
         mediaType: widget.mediaType,
         mediaPlatform: widget.platformName,
+        genre: _selectedGenre,
+        year: _selectedYear,
+        director: _selectedDirector,
+        host: _selectedHost,
+        album: _selectedAlbum,
       );
       
       // Извлекаем уникальные названия контентов из загруженных слов
+      // Используем Set для гарантии уникальности, нормализуем названия
       final words = context.read<VocabularyProvider>().words;
-      final uniqueContents = words
-          .where((word) => word.mediaContentTitle != null && word.mediaContentTitle!.isNotEmpty)
-          .map((word) => word.mediaContentTitle!)
-          .toSet()
-          .toList()
-        ..sort();
+      final Set<String> uniqueContentsSet = {};
+      
+      print('📱 Загружено слов: ${words.length}');
+      
+      for (final word in words) {
+        final title = word.mediaContentTitle?.trim();
+        if (title != null && title.isNotEmpty) {
+          print('📱 Найден контент: "$title" (до нормализации: "${word.mediaContentTitle}")');
+          // Используем Set для автоматической уникальности
+          final wasAdded = uniqueContentsSet.add(title);
+          if (!wasAdded) {
+            print('⚠️ Дубликат контента игнорирован: "$title"');
+          }
+        }
+      }
+      
+      print('📱 Уникальных контентов: ${uniqueContentsSet.length}');
+      
+      // Преобразуем в список и сортируем
+      final uniqueContents = uniqueContentsSet.toList()..sort();
       
       if (mounted) {
         setState(() {
@@ -105,6 +204,194 @@ class _MediaPlatformContentScreenState extends State<MediaPlatformContentScreen>
         setState(() {
           _isLoadingContent = false;
         });
+      }
+    }
+  }
+  
+  // Получить уникальные значения из всех слов для фильтров
+  List<String> _getUniqueValues(List<Word> words, String? Function(Word) getter) {
+    return words
+        .where((word) {
+          final value = getter(word);
+          return value != null && value.isNotEmpty;
+        })
+        .map((word) => getter(word)!)
+        .toSet()
+        .toList()
+      ..sort();
+  }
+  
+  List<int> _getUniqueYears(List<Word> words) {
+    return words
+        .where((word) => word.year != null)
+        .map((word) => word.year!)
+        .toSet()
+        .toList()
+      ..sort();
+  }
+  
+  Future<void> _confirmDeleteContent(BuildContext context, String contentTitle, int wordsCount) async {
+    final themeProvider = context.read<ThemeProvider>();
+    final isDark = themeProvider.isDarkMode;
+    
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF1A1F3A) : Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.red[400],
+                size: 28,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Supprimer le contenu',
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black87,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Êtes-vous sûr de vouloir supprimer "$contentTitle" ?',
+                style: TextStyle(
+                  color: isDark ? Colors.white70 : Colors.black87,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.red.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.red[400], size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Tous les $wordsCount ${wordsCount == 1 ? 'mot ou expression' : 'mots et expressions'} associés seront également supprimés.',
+                        style: TextStyle(
+                          color: Colors.red[700],
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Cette action est irréversible !',
+                style: TextStyle(
+                  color: Colors.red[400],
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(
+                'Annuler',
+                style: TextStyle(
+                  color: isDark ? Colors.white70 : Colors.black54,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Supprimer'),
+            ),
+          ],
+        );
+      },
+    );
+    
+    if (confirmed == true && mounted) {
+      await _deleteContent(contentTitle);
+    }
+  }
+  
+  Future<void> _deleteContent(String contentTitle) async {
+    try {
+      // Показываем индикатор загрузки
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+              SizedBox(width: 16),
+              Text('Suppression en cours...'),
+            ],
+          ),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      
+      final deletedCount = await context.read<VocabularyProvider>().deleteContent(
+        mediaType: widget.mediaType,
+        mediaPlatform: widget.platformName,
+        mediaContentTitle: contentTitle,
+      );
+      
+      // Обновляем список контентов и фильтров
+      await _loadAllWordsForFilters();
+      await _loadContentList();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ "$contentTitle" supprimé ($deletedCount ${deletedCount == 1 ? 'mot supprimé' : 'mots supprimés'})'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Erreur lors de la suppression: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
       }
     }
   }
@@ -230,11 +517,11 @@ class _MediaPlatformContentScreenState extends State<MediaPlatformContentScreen>
         actions: [
           // Кнопка добавления
           if (_isThemeMode)
-            IconButton(
-              icon: const Icon(Icons.add_circle_outline, size: 28),
-              onPressed: _addNew,
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline, size: 28),
+            onPressed: _addNew,
               tooltip: 'Ajouter un thème',
-            ),
+          ),
         ],
       ),
       body: CosmicBackground(
@@ -415,6 +702,346 @@ class _MediaPlatformContentScreenState extends State<MediaPlatformContentScreen>
           ),
         ),
         
+        // Фильтры для контента
+        Builder(
+          builder: (context) {
+            // Используем все слова для фильтров (загружены без фильтров)
+            final uniqueDirectors = _getUniqueValues(_allWordsForFilters, (w) => w.director);
+            final uniqueHosts = _getUniqueValues(_allWordsForFilters, (w) => w.host);
+            final uniqueAlbums = _getUniqueValues(_allWordsForFilters, (w) => w.album);
+            final uniqueYears = _getUniqueYears(_allWordsForFilters);
+            
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Filtres de contenu',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: themeProvider.isDarkMode 
+                          ? Colors.white70 
+                          : Colors.black54,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  // Фильтры для films/series
+                  if (widget.mediaType == 'films' || widget.mediaType == 'series') ...[
+                    // Жанр
+                    Card(
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                        child: DropdownButton<String>(
+                          value: _selectedGenre,
+                          hint: const Text('Genre'),
+                          isExpanded: true,
+                          underline: const SizedBox(),
+                          items: [
+                            const DropdownMenuItem<String>(
+                              value: null,
+                              child: Text('Tous les genres'),
+                            ),
+                            ..._availableGenres.map((genre) => DropdownMenuItem<String>(
+                              value: genre,
+                              child: Text(genre),
+                            )),
+                          ],
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedGenre = value;
+                            });
+                            _loadContentList();
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    
+                    // Год
+                    if (uniqueYears.isNotEmpty)
+                      Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                          child: DropdownButton<int>(
+                            value: _selectedYear,
+                            hint: const Text('Année'),
+                            isExpanded: true,
+                            underline: const SizedBox(),
+                            items: [
+                              const DropdownMenuItem<int>(
+                                value: null,
+                                child: Text('Toutes les années'),
+                              ),
+                              ...uniqueYears.map((year) => DropdownMenuItem<int>(
+                                value: year,
+                                child: Text(year.toString()),
+                              )),
+                            ],
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedYear = value;
+                              });
+                              _loadContentList();
+                            },
+                          ),
+                        ),
+                      ),
+                    
+                    if (uniqueYears.isNotEmpty) const SizedBox(height: 8),
+                    
+                    // Режиссер (только для films)
+                    if (widget.mediaType == 'films' && uniqueDirectors.isNotEmpty)
+                      Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                          child: DropdownButton<String>(
+                            value: _selectedDirector,
+                            hint: const Text('Réalisateur'),
+                            isExpanded: true,
+                            underline: const SizedBox(),
+                            items: [
+                              const DropdownMenuItem<String>(
+                                value: null,
+                                child: Text('Tous les réalisateurs'),
+                              ),
+                              ...uniqueDirectors.map((director) => DropdownMenuItem<String>(
+                                value: director,
+                                child: Text(director),
+                              )),
+                            ],
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedDirector = value;
+                              });
+                              _loadContentList();
+                            },
+                          ),
+                        ),
+                      ),
+                  ],
+                  
+                  // Фильтры для music
+                  if (widget.mediaType == 'music') ...[
+                    // Жанр
+                    Card(
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                        child: DropdownButton<String>(
+                          value: _selectedGenre,
+                          hint: const Text('Genre'),
+                          isExpanded: true,
+                          underline: const SizedBox(),
+                          items: [
+                            const DropdownMenuItem<String>(
+                              value: null,
+                              child: Text('Tous les genres'),
+                            ),
+                            ..._availableGenres.map((genre) => DropdownMenuItem<String>(
+                              value: genre,
+                              child: Text(genre),
+                            )),
+                          ],
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedGenre = value;
+                            });
+                            _loadContentList();
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    
+                    // Год
+                    if (uniqueYears.isNotEmpty)
+                      Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                          child: DropdownButton<int>(
+                            value: _selectedYear,
+                            hint: const Text('Année'),
+                            isExpanded: true,
+                            underline: const SizedBox(),
+                            items: [
+                              const DropdownMenuItem<int>(
+                                value: null,
+                                child: Text('Toutes les années'),
+                              ),
+                              ...uniqueYears.map((year) => DropdownMenuItem<int>(
+                                value: year,
+                                child: Text(year.toString()),
+                              )),
+                            ],
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedYear = value;
+                              });
+                              _loadContentList();
+                            },
+                          ),
+                        ),
+                      ),
+                    
+                    if (uniqueYears.isNotEmpty) const SizedBox(height: 8),
+                    
+                    // Альбом
+                    if (uniqueAlbums.isNotEmpty)
+                      Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                          child: DropdownButton<String>(
+                            value: _selectedAlbum,
+                            hint: const Text('Album'),
+                            isExpanded: true,
+                            underline: const SizedBox(),
+                            items: [
+                              const DropdownMenuItem<String>(
+                                value: null,
+                                child: Text('Tous les albums'),
+                              ),
+                              ...uniqueAlbums.map((album) => DropdownMenuItem<String>(
+                                value: album,
+                                child: Text(album),
+                              )),
+                            ],
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedAlbum = value;
+                              });
+                              _loadContentList();
+                            },
+                          ),
+                        ),
+                      ),
+                  ],
+                  
+                  // Фильтры для podcasts
+                  if (widget.mediaType == 'podcasts') ...[
+                    // Жанр
+                    Card(
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                        child: DropdownButton<String>(
+                          value: _selectedGenre,
+                          hint: const Text('Genre'),
+                          isExpanded: true,
+                          underline: const SizedBox(),
+                          items: [
+                            const DropdownMenuItem<String>(
+                              value: null,
+                              child: Text('Tous les genres'),
+                            ),
+                            ..._availableGenres.map((genre) => DropdownMenuItem<String>(
+                              value: genre,
+                              child: Text(genre),
+                            )),
+                          ],
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedGenre = value;
+                            });
+                            _loadContentList();
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    
+                    // Ведущий
+                    if (uniqueHosts.isNotEmpty)
+                      Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                          child: DropdownButton<String>(
+                            value: _selectedHost,
+                            hint: const Text('Animateur'),
+                            isExpanded: true,
+                            underline: const SizedBox(),
+                            items: [
+                              const DropdownMenuItem<String>(
+                                value: null,
+                                child: Text('Tous les animateurs'),
+                              ),
+                              ...uniqueHosts.map((host) => DropdownMenuItem<String>(
+                                value: host,
+                                child: Text(host),
+                              )),
+                            ],
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedHost = value;
+                              });
+                              _loadContentList();
+                            },
+                          ),
+                        ),
+                      ),
+                  ],
+                  
+                  // Кнопка очистки фильтров
+                  if (_selectedGenre != null || 
+                      _selectedYear != null || 
+                      _selectedDirector != null || 
+                      _selectedHost != null || 
+                      _selectedAlbum != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                      child: TextButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _selectedGenre = null;
+                            _selectedYear = null;
+                            _selectedDirector = null;
+                            _selectedHost = null;
+                            _selectedAlbum = null;
+                          });
+                          _loadContentList();
+                        },
+                        icon: const Icon(Icons.clear, size: 18),
+                        label: const Text('Effacer les filtres'),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
+        ),
+        
         // Список контента или пустое состояние
         Expanded(
           child: _isLoadingContent
@@ -423,44 +1050,69 @@ class _MediaPlatformContentScreenState extends State<MediaPlatformContentScreen>
                 )
               : _contentList.isEmpty
                   ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.movie_creation_outlined,
-                            size: 80,
-                            color: Colors.grey.withOpacity(0.5),
-                          ),
-                          const SizedBox(height: 20),
-                          Text(
-                            'Aucun contenu ajouté',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: Colors.grey,
-                            ),
-                          ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.movie_creation_outlined,
+              size: 80,
+              color: Colors.grey.withOpacity(0.5),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Aucun contenu ajouté',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: Colors.grey,
+              ),
+            ),
                         ],
                       ),
                     )
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _contentList.length,
-                      itemBuilder: (context, index) {
-                        final content = _contentList[index];
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          child: ListTile(
-                            leading: const Icon(Icons.movie, size: 32),
-                            title: Text(content, style: const TextStyle(fontWeight: FontWeight.w600)),
-                            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                            onTap: () {
-                              // Navigate to vocabulary screen for this content
-                              context.push(
-                                '/media-content-words/${Uri.encodeComponent(widget.mediaType)}/'
-                                '${Uri.encodeComponent(widget.platformName)}/'
-                                '${Uri.encodeComponent(content)}',
-                              );
-                            },
-                          ),
+                  : Builder(
+                      builder: (context) {
+                        return ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: _contentList.length,
+                          itemBuilder: (context, index) {
+                            final content = _contentList[index];
+                            // Считаем количество слов для этого контента из всех загруженных слов
+                            final wordsCount = _allWordsForFilters.where((word) =>
+                                word.mediaContentTitle?.trim() == content &&
+                                word.mediaType == widget.mediaType &&
+                                word.mediaPlatform == widget.platformName).length;
+                            
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              child: ListTile(
+                                leading: const Icon(Icons.movie, size: 32),
+                                title: Text(content, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                subtitle: wordsCount > 0 
+                                    ? Text('$wordsCount ${wordsCount == 1 ? 'mot' : 'mots'}')
+                                    : null,
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (wordsCount > 0)
+                                      IconButton(
+                                        icon: const Icon(Icons.delete_outline, size: 20),
+                                        color: Colors.red,
+                                        onPressed: () => _confirmDeleteContent(context, content, wordsCount),
+                                        tooltip: 'Supprimer le contenu',
+                                      ),
+                                    const Icon(Icons.arrow_forward_ios, size: 16),
+                                  ],
+                                ),
+                                onTap: () {
+                                  // Navigate to vocabulary screen for this content
+                                  context.push(
+                                    '/media-content-words/${Uri.encodeComponent(widget.mediaType)}/'
+                                    '${Uri.encodeComponent(widget.platformName)}/'
+                                    '${Uri.encodeComponent(content)}',
+                                  );
+                                },
+                              ),
+                            );
+                          },
                         );
                       },
                     ),

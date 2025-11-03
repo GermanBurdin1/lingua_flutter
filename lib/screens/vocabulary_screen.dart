@@ -32,6 +32,10 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
   String? _selectedSourceLang;
   String? _selectedTargetLang;
   
+  // Фильтры для слов внутри контента
+  String? _selectedSubtopic;
+  String? _selectedSortBy; // 'date', 'subtopic', 'word'
+  
   // Функция для получения названия языка
   String _getLangName(String? langCode) {
     switch (langCode) {
@@ -45,6 +49,16 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
         return langCode ?? 'Tous';
     }
   }
+  
+  // Получить уникальные подтемы из слов
+  List<String> _getUniqueSubtopics(List<Word> words) {
+    return words
+        .where((word) => word.subtopic != null && word.subtopic!.isNotEmpty)
+        .map((word) => word.subtopic!)
+        .toSet()
+        .toList()
+      ..sort();
+  }
 
   @override
   void initState() {
@@ -57,13 +71,44 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
   Future<void> _fetchWords() async {
     await context.read<VocabularyProvider>().fetchWords(
       galaxy: widget.galaxyName,
-      subtopic: widget.subtopicName,
+      subtopic: _selectedSubtopic ?? widget.subtopicName,
       mediaType: widget.mediaType,
       mediaPlatform: widget.mediaPlatform,
       mediaContentTitle: widget.mediaContentTitle,
       sourceLang: _selectedSourceLang,
       targetLang: _selectedTargetLang,
     );
+  }
+  
+  // Сортировка слов
+  List<Word> _sortWords(List<Word> words) {
+    final sorted = List<Word>.from(words);
+    
+    switch (_selectedSortBy) {
+      case 'date':
+        // Сортировка по дате (новые сначала) - используем порядок загрузки (новые в конце списка, поэтому реверсируем)
+        return sorted.reversed.toList();
+      case 'subtopic':
+        // Слова с подтемами сначала, потом без подтем
+        sorted.sort((a, b) {
+          final aHasSubtopic = a.subtopic != null && a.subtopic!.isNotEmpty;
+          final bHasSubtopic = b.subtopic != null && b.subtopic!.isNotEmpty;
+          if (aHasSubtopic && !bHasSubtopic) return -1;
+          if (!aHasSubtopic && bHasSubtopic) return 1;
+          if (aHasSubtopic && bHasSubtopic) {
+            return a.subtopic!.compareTo(b.subtopic!);
+          }
+          return 0;
+        });
+        break;
+      case 'word':
+      default:
+        // Сортировка по слову (алфавитная)
+        sorted.sort((a, b) => a.word.compareTo(b.word));
+        break;
+    }
+    
+    return sorted;
   }
 
   void _handleWordRecorded(String word) async {
@@ -657,6 +702,101 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
               
               const SizedBox(height: 16),
               
+              // Фильтры для слов внутри контента (только если открыт конкретный контент)
+              if (widget.mediaContentTitle != null)
+                Consumer<VocabularyProvider>(
+                  builder: (context, provider, child) {
+                    final words = provider.words;
+                    final uniqueSubtopics = _getUniqueSubtopics(words);
+                    
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Row(
+                        children: [
+                          // Фильтр по подтемам
+                          if (uniqueSubtopics.isNotEmpty) ...[
+                            Expanded(
+                              child: Card(
+                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                  child: DropdownButton<String>(
+                                    value: _selectedSubtopic,
+                                    hint: const Text('Sous-thème'),
+                                    isExpanded: true,
+                                    underline: const SizedBox(),
+                                    items: [
+                                      const DropdownMenuItem<String>(
+                                        value: null,
+                                        child: Text('Toutes les sous-thèmes'),
+                                      ),
+                                      ...uniqueSubtopics.map((subtopic) => DropdownMenuItem<String>(
+                                        value: subtopic,
+                                        child: Text(subtopic),
+                                      )),
+                                    ],
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _selectedSubtopic = value;
+                                      });
+                                      _fetchWords();
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                          ],
+                          
+                          // Сортировка
+                          Expanded(
+                            child: Card(
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                child: DropdownButton<String>(
+                                  value: _selectedSortBy,
+                                  hint: const Text('Trier par'),
+                                  isExpanded: true,
+                                  underline: const SizedBox(),
+                                  items: const [
+                                    DropdownMenuItem<String>(
+                                      value: 'date',
+                                      child: Text('Date d\'ajout'),
+                                    ),
+                                    DropdownMenuItem<String>(
+                                      value: 'subtopic',
+                                      child: Text('Sous-thème'),
+                                    ),
+                                    DropdownMenuItem<String>(
+                                      value: 'word',
+                                      child: Text('Mot (A-Z)'),
+                                    ),
+                                  ],
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _selectedSortBy = value;
+                                    });
+                                    // Не нужно перезагружать слова, только сортировать
+                                  },
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              
+              const SizedBox(height: 16),
+              
               Expanded(
                 child: Consumer<VocabularyProvider>(
                   builder: (context, provider, child) {
@@ -698,13 +838,15 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                       );
                     }
 
+                    final sortedWords = _sortWords(provider.words);
+                    
                     return RefreshIndicator(
                       onRefresh: () => _fetchWords(),
                       child: ListView.builder(
-                        itemCount: provider.words.length,
+                        itemCount: sortedWords.length,
                         padding: const EdgeInsets.all(16),
                         itemBuilder: (context, index) {
-                          final word = provider.words[index];
+                          final word = sortedWords[index];
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
                             decoration: BoxDecoration(

@@ -21,6 +21,12 @@ class VocabularyProvider with ChangeNotifier {
     String? mediaContentTitle,
     String? sourceLang,
     String? targetLang,
+    String? genre,
+    int? year,
+    String? director,
+    String? host,
+    String? guests,
+    String? album,
   }) async {
     _isLoading = true;
     _error = null;
@@ -33,6 +39,12 @@ class VocabularyProvider with ChangeNotifier {
         mediaType: mediaType,
         mediaPlatform: mediaPlatform,
         mediaContentTitle: mediaContentTitle,
+        genre: genre,
+        year: year,
+        director: director,
+        host: host,
+        guests: guests,
+        album: album,
       );
       
       // Фильтруем по языкам на клиенте (если параметры переданы)
@@ -188,6 +200,31 @@ class VocabularyProvider with ChangeNotifier {
       await _apiService.deleteWord(wordId);
       _words.removeWhere((word) => word.id == wordId);
       notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<int> deleteContent({
+    required String mediaType,
+    required String mediaPlatform,
+    required String mediaContentTitle,
+  }) async {
+    try {
+      final deletedCount = await _apiService.deleteContent(
+        mediaType: mediaType,
+        mediaPlatform: mediaPlatform,
+        mediaContentTitle: mediaContentTitle,
+      );
+      // Удаляем слова из локального списка
+      _words.removeWhere((word) =>
+          word.mediaType == mediaType &&
+          word.mediaPlatform == mediaPlatform &&
+          word.mediaContentTitle == mediaContentTitle);
+      notifyListeners();
+      return deletedCount;
     } catch (e) {
       _error = e.toString();
       notifyListeners();

@@ -173,12 +173,19 @@ class ApiService {
     String? mediaType,
     String? mediaPlatform,
     String? mediaContentTitle,
+    String? genre,
+    int? year,
+    String? director,
+    String? host,
+    String? guests,
+    String? album,
   }) async {
     await loadTokens();
     
     print('📚 getLexicon called');
     print('📚 galaxy: $galaxy, subtopic: $subtopic');
     print('📚 mediaType: $mediaType, mediaPlatform: $mediaPlatform, mediaContentTitle: $mediaContentTitle');
+    print('📚 filters: genre=$genre, year=$year, director=$director, host=$host, guests=$guests, album=$album');
     print('📚 access_token present: ${_accessToken != null}');
     
     final queryParams = <String, String>{};
@@ -187,6 +194,12 @@ class ApiService {
     if (mediaType != null && mediaType.isNotEmpty) queryParams['mediaType'] = mediaType;
     if (mediaPlatform != null && mediaPlatform.isNotEmpty) queryParams['mediaPlatform'] = mediaPlatform;
     if (mediaContentTitle != null && mediaContentTitle.isNotEmpty) queryParams['mediaContentTitle'] = mediaContentTitle;
+    if (genre != null && genre.isNotEmpty) queryParams['genre'] = genre;
+    if (year != null) queryParams['year'] = year.toString();
+    if (director != null && director.isNotEmpty) queryParams['director'] = director;
+    if (host != null && host.isNotEmpty) queryParams['host'] = host;
+    if (guests != null && guests.isNotEmpty) queryParams['guests'] = guests;
+    if (album != null && album.isNotEmpty) queryParams['album'] = album;
     
     // 📱 Используем специальный endpoint для мобильного приложения с фильтрацией
     final uri = Uri.parse('$vocabularyBaseUrl/lexicon/mobile/filtered')
@@ -499,6 +512,48 @@ class ApiService {
       return deleteWord(wordId);
     } else {
       throw Exception('Ошибка удаления слова');
+    }
+  }
+
+  // 📱 [MOBILE APP] Удалить контент со всеми словами
+  Future<int> deleteContent({
+    required String mediaType,
+    required String mediaPlatform,
+    required String mediaContentTitle,
+  }) async {
+    await loadTokens();
+
+    final queryParams = <String, String>{
+      'mediaType': mediaType,
+      'mediaPlatform': mediaPlatform,
+      'mediaContentTitle': mediaContentTitle,
+    };
+
+    final uri = Uri.parse('$vocabularyBaseUrl/lexicon/mobile/content')
+        .replace(queryParameters: queryParams);
+
+    print('📱 Deleting content: $mediaContentTitle');
+    print('📱 Request URL: $uri');
+
+    final response = await http.delete(
+      uri,
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 204) {
+      final data = json.decode(response.body);
+      final deletedCount = data['deletedCount'] as int? ?? 0;
+      print('📱 Deleted $deletedCount words');
+      return deletedCount;
+    } else if (response.statusCode == 401) {
+      await refreshAccessToken();
+      return deleteContent(
+        mediaType: mediaType,
+        mediaPlatform: mediaPlatform,
+        mediaContentTitle: mediaContentTitle,
+      );
+    } else {
+      throw Exception('Ошибка удаления контента: ${response.statusCode}');
     }
   }
 
