@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../models/galaxy.dart';
 import '../providers/vocabulary_provider.dart';
 import '../providers/theme_provider.dart';
@@ -413,7 +414,7 @@ class _AddWordScreenState extends State<AddWordScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('✅ Mot modifié avec succès!')),
           );
-          Navigator.pop(context, true);
+          context.pop(true);
         }
       } else {
         print('🔍 Using addWord (no wordId)');
@@ -463,7 +464,7 @@ class _AddWordScreenState extends State<AddWordScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('✅ Mot ajouté avec succès!')),
           );
-          Navigator.pop(context, true);
+          context.pop(true);
         }
       }
     } catch (e) {
@@ -824,7 +825,9 @@ class _AddWordScreenState extends State<AddWordScreen> {
                         children: [
                           Expanded(
                             child: DropdownButtonFormField<String>(
-                              value: _selectedGenre,
+                              value: _selectedGenre != null && _availableGenres.contains(_selectedGenre)
+                                  ? _selectedGenre
+                                  : null,
                               decoration: InputDecoration(
                                 labelText: 'Genre (optionnel)',
                                 prefixIcon: const Icon(Icons.category),
@@ -833,6 +836,10 @@ class _AddWordScreenState extends State<AddWordScreen> {
                                 ),
                               ),
                               items: [
+                                const DropdownMenuItem<String>(
+                                  value: null,
+                                  child: Text('Aucun'),
+                                ),
                                 ..._availableGenres.map((genre) => DropdownMenuItem(
                                   value: genre,
                                   child: Text(genre),
@@ -907,7 +914,9 @@ class _AddWordScreenState extends State<AddWordScreen> {
                         children: [
                           Expanded(
                             child: DropdownButtonFormField<String>(
-                              value: _selectedGenre,
+                              value: _selectedGenre != null && _availableGenres.contains(_selectedGenre)
+                                  ? _selectedGenre
+                                  : null,
                               decoration: InputDecoration(
                                 labelText: 'Genre (optionnel)',
                                 prefixIcon: const Icon(Icons.category),
@@ -916,6 +925,10 @@ class _AddWordScreenState extends State<AddWordScreen> {
                                 ),
                               ),
                               items: [
+                                const DropdownMenuItem<String>(
+                                  value: null,
+                                  child: Text('Aucun'),
+                                ),
                                 ..._availableGenres.map((genre) => DropdownMenuItem(
                                   value: genre,
                                   child: Text(genre),
@@ -994,7 +1007,9 @@ class _AddWordScreenState extends State<AddWordScreen> {
                         children: [
                           Expanded(
                             child: DropdownButtonFormField<String>(
-                              value: _selectedGenre,
+                              value: _selectedGenre != null && _availableGenres.contains(_selectedGenre)
+                                  ? _selectedGenre
+                                  : null,
                               decoration: InputDecoration(
                                 labelText: 'Genre (optionnel)',
                                 prefixIcon: const Icon(Icons.category),
@@ -1003,6 +1018,10 @@ class _AddWordScreenState extends State<AddWordScreen> {
                                 ),
                               ),
                               items: [
+                                const DropdownMenuItem<String>(
+                                  value: null,
+                                  child: Text('Aucun'),
+                                ),
                                 ..._availableGenres.map((genre) => DropdownMenuItem(
                                   value: genre,
                                   child: Text(genre),
@@ -1072,7 +1091,9 @@ class _AddWordScreenState extends State<AddWordScreen> {
                   if ((widget.initialGalaxy != null && widget.initialSubtopic != null) || 
                       (widget.mediaType != null)) ...[
                     DropdownButtonFormField<String>(
-                      value: _selectedGalaxy,
+                      value: _selectedGalaxy != null && galaxiesData.any((g) => g.name == _selectedGalaxy)
+                          ? _selectedGalaxy
+                          : null,
                       decoration: InputDecoration(
                         labelText: widget.initialGalaxy != null && widget.initialSubtopic != null 
                             ? 'Galaxie' 
@@ -1082,12 +1103,18 @@ class _AddWordScreenState extends State<AddWordScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      items: galaxiesData.map((galaxy) {
-                        return DropdownMenuItem(
-                          value: galaxy.name,
-                          child: Text('${galaxy.icon} ${galaxy.name}'),
-                        );
-                      }).toList(),
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: null,
+                          child: Text('Aucune'),
+                        ),
+                        ...galaxiesData.map((galaxy) {
+                          return DropdownMenuItem(
+                            value: galaxy.name,
+                            child: Text('${galaxy.icon} ${galaxy.name}'),
+                          );
+                        }),
+                      ],
                       onChanged: (value) {
                         if (!mounted) return;
                         setState(() {
@@ -1108,7 +1135,9 @@ class _AddWordScreenState extends State<AddWordScreen> {
                     // Subtopic selector
                     if (_selectedGalaxy != null)
                       DropdownButtonFormField<String>(
-                        value: _selectedSubtopic,
+                        value: _selectedSubtopic != null && _getSubtopics().any((s) => s.name == _selectedSubtopic)
+                            ? _selectedSubtopic
+                            : null,
                         decoration: InputDecoration(
                           labelText: widget.initialGalaxy != null && widget.initialSubtopic != null 
                               ? 'Sous-thème' 
@@ -1118,12 +1147,18 @@ class _AddWordScreenState extends State<AddWordScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        items: _getSubtopics().map((subtopic) {
-                          return DropdownMenuItem(
-                            value: subtopic.name,
-                            child: Text('${subtopic.icon} ${subtopic.name}'),
-                          );
-                        }).toList(),
+                        items: [
+                          const DropdownMenuItem<String>(
+                            value: null,
+                            child: Text('Aucun'),
+                          ),
+                          ..._getSubtopics().map((subtopic) {
+                            return DropdownMenuItem(
+                              value: subtopic.name,
+                              child: Text('${subtopic.icon} ${subtopic.name}'),
+                            );
+                          }),
+                        ],
                         onChanged: (value) {
                           if (!mounted) return;
                           setState(() {

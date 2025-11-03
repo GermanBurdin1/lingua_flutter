@@ -230,6 +230,196 @@ class _MediaPlatformContentScreenState extends State<MediaPlatformContentScreen>
       ..sort();
   }
   
+  Future<void> _showContentDetails(BuildContext context, String contentTitle) async {
+    final themeProvider = context.read<ThemeProvider>();
+    final isDark = themeProvider.isDarkMode;
+    
+    // Находим первое слово этого контента для получения общей информации
+    final contentWords = _allWordsForFilters.where((word) =>
+        word.mediaContentTitle?.trim() == contentTitle &&
+        word.mediaType == widget.mediaType &&
+        word.mediaPlatform == widget.platformName).toList();
+    
+    if (contentWords.isEmpty) {
+      return; // Нет слов для отображения информации
+    }
+    
+    // Берем первое слово для общей информации
+    final firstWord = contentWords.first;
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF1A1F3A) : Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Icon(
+                Icons.movie,
+                color: isDark ? const Color(0xFF00F5FF) : const Color(0xFF0066FF),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  contentTitle,
+                  style: TextStyle(
+                    color: isDark ? const Color(0xFF00F5FF) : const Color(0xFF0066FF),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Платформа
+                if (firstWord.mediaPlatform != null && firstWord.mediaPlatform!.isNotEmpty) ...[
+                  _buildDetailRow(
+                    icon: Icons.play_circle_outline,
+                    label: 'Plateforme',
+                    value: firstWord.mediaPlatform!,
+                    isDark: isDark,
+                  ),
+                ],
+                
+                // Опциональные поля медиа-контента
+                // Жанры
+                if (firstWord.genre != null && firstWord.genre!.isNotEmpty) ...[
+                  _buildDetailRow(
+                    icon: Icons.category,
+                    label: 'Genres',
+                    value: firstWord.genre!,
+                    isDark: isDark,
+                  ),
+                ],
+                
+                // Год
+                if (firstWord.year != null) ...[
+                  _buildDetailRow(
+                    icon: Icons.calendar_today,
+                    label: 'Année',
+                    value: firstWord.year.toString(),
+                    isDark: isDark,
+                  ),
+                ],
+                
+                // Режиссер (для films/series)
+                if (firstWord.director != null && firstWord.director!.isNotEmpty && 
+                    (firstWord.mediaType == 'films' || firstWord.mediaType == 'series')) ...[
+                  _buildDetailRow(
+                    icon: Icons.person,
+                    label: 'Réalisateur',
+                    value: firstWord.director!,
+                    isDark: isDark,
+                  ),
+                ],
+                
+                // Альбом (для music)
+                if (firstWord.album != null && firstWord.album!.isNotEmpty && firstWord.mediaType == 'music') ...[
+                  _buildDetailRow(
+                    icon: Icons.album,
+                    label: 'Album',
+                    value: firstWord.album!,
+                    isDark: isDark,
+                  ),
+                ],
+                
+                // Ведущий (для podcasts)
+                if (firstWord.host != null && firstWord.host!.isNotEmpty && firstWord.mediaType == 'podcasts') ...[
+                  _buildDetailRow(
+                    icon: Icons.mic,
+                    label: 'Animateur',
+                    value: firstWord.host!,
+                    isDark: isDark,
+                  ),
+                ],
+                
+                // Приглашенные (для podcasts)
+                if (firstWord.guests != null && firstWord.guests!.isNotEmpty && firstWord.mediaType == 'podcasts') ...[
+                  _buildDetailRow(
+                    icon: Icons.people,
+                    label: 'Invités',
+                    value: firstWord.guests!,
+                    isDark: isDark,
+                  ),
+                ],
+                
+                // Количество слов
+                _buildDetailRow(
+                  icon: Icons.book,
+                  label: 'Nombre de mots',
+                  value: '${contentWords.length} ${contentWords.length == 1 ? 'mot' : 'mots'}',
+                  isDark: isDark,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                'Fermer',
+                style: TextStyle(
+                  color: isDark ? Colors.white60 : Colors.black54,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  
+  Widget _buildDetailRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    required bool isDark,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            icon,
+            size: 20,
+            color: isDark ? const Color(0xFF00F5FF) : const Color(0xFF0066FF),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.white70 : Colors.black54,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: isDark ? Colors.white : Colors.black87,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _confirmDeleteContent(BuildContext context, String contentTitle, int wordsCount) async {
     final themeProvider = context.read<ThemeProvider>();
     final isDark = themeProvider.isDarkMode;
@@ -1092,13 +1282,20 @@ class _MediaPlatformContentScreenState extends State<MediaPlatformContentScreen>
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    if (wordsCount > 0)
+                                    if (wordsCount > 0) ...[
+                                      IconButton(
+                                        icon: const Icon(Icons.info_outline, size: 20),
+                                        color: Theme.of(context).colorScheme.primary,
+                                        onPressed: () => _showContentDetails(context, content),
+                                        tooltip: 'Détails',
+                                      ),
                                       IconButton(
                                         icon: const Icon(Icons.delete_outline, size: 20),
                                         color: Colors.red,
                                         onPressed: () => _confirmDeleteContent(context, content, wordsCount),
                                         tooltip: 'Supprimer le contenu',
                                       ),
+                                    ],
                                     const Icon(Icons.arrow_forward_ios, size: 16),
                                   ],
                                 ),

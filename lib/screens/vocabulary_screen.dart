@@ -413,6 +413,38 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  
+                  // Уникальные поля для конкретного слова (не общие для контента)
+                  // Сезон и серия (для series) - могут отличаться для разных слов
+                  if (word.mediaType == 'series') ...[
+                    if (word.season != null) ...[
+                      _buildDetailRow(
+                        icon: Icons.tv,
+                        label: 'Saison',
+                        value: word.season.toString(),
+                        isDark: isDark,
+                      ),
+                    ],
+                    if (word.episode != null) ...[
+                      _buildDetailRow(
+                        icon: Icons.video_library,
+                        label: 'Épisode',
+                        value: word.episode.toString(),
+                        isDark: isDark,
+                      ),
+                    ],
+                  ],
+                  
+                  // Временная метка - уникальна для каждого слова
+                  if (word.timestamp != null && word.timestamp!.isNotEmpty) ...[
+                    _buildDetailRow(
+                      icon: Icons.access_time,
+                      label: 'Minute:Seconde',
+                      value: word.timestamp!,
+                      isDark: isDark,
+                    ),
+                  ],
                 ],
               ],
             ),
@@ -442,6 +474,52 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
           ],
         );
       },
+    );
+  }
+  
+  Widget _buildDetailRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    required bool isDark,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            icon,
+            size: 20,
+            color: isDark ? const Color(0xFF00F5FF) : const Color(0xFF0066FF),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.white70 : Colors.black54,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: isDark ? Colors.white : Colors.black87,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1066,6 +1144,12 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.info_outline, size: 20),
+                                    onPressed: () => _showWordDetailsModal(word),
+                                    tooltip: 'Détails',
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ),
                                   IconButton(
                                     icon: const Icon(Icons.edit, size: 20),
                                     onPressed: () => _editWord(word),
