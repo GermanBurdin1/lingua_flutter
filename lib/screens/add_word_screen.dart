@@ -38,6 +38,14 @@ class _AddWordScreenState extends State<AddWordScreen> {
   final _seasonController = TextEditingController();
   final _episodeController = TextEditingController();
   final _timestampController = TextEditingController();
+  // Контроллеры для дополнительных полей медиа-контента
+  final _genreController = TextEditingController();
+  final _yearController = TextEditingController();
+  final _directorController = TextEditingController();
+  final _hostController = TextEditingController();
+  final _guestsController = TextEditingController();
+  final _albumController = TextEditingController();
+  final _contentTitleController = TextEditingController(); // Для ввода названия контента
 
   String _selectedType = 'word'; // 'word' or 'expression'
   String? _selectedGalaxy;
@@ -46,6 +54,7 @@ class _AddWordScreenState extends State<AddWordScreen> {
   String _targetLang = 'ru';
   bool _isLoading = false;
   bool _isManualTranslation = false;
+  bool _hasContentTitle = false; // Для динамического показа дополнительных полей
 
   @override
   void initState() {
@@ -69,6 +78,13 @@ class _AddWordScreenState extends State<AddWordScreen> {
     _seasonController.dispose();
     _episodeController.dispose();
     _timestampController.dispose();
+    _genreController.dispose();
+    _yearController.dispose();
+    _directorController.dispose();
+    _hostController.dispose();
+    _guestsController.dispose();
+    _albumController.dispose();
+    _contentTitleController.dispose();
     super.dispose();
   }
 
@@ -80,6 +96,36 @@ class _AddWordScreenState extends State<AddWordScreen> {
     );
     return galaxy.subtopics;
   }
+  
+  String _getContentTitleLabel() {
+    switch (widget.mediaType) {
+      case 'films':
+        return 'Titre du film';
+      case 'series':
+        return 'Titre de la série';
+      case 'music':
+        return 'Titre de la chanson/album';
+      case 'podcasts':
+        return 'Titre du podcast/épisode';
+      default:
+        return 'Titre du contenu';
+    }
+  }
+  
+  String _getContentTitleHint() {
+    switch (widget.mediaType) {
+      case 'films':
+        return 'Ex: Inception';
+      case 'series':
+        return 'Ex: Dexter';
+      case 'music':
+        return 'Ex: Bohemian Rhapsody';
+      case 'podcasts':
+        return 'Ex: Tech Talk Ep.1';
+      default:
+        return 'Ex: ...';
+    }
+  }
 
   Future<void> _requestAutoTranslation() async {
     if (_wordController.text.trim().isEmpty) {
@@ -89,6 +135,7 @@ class _AddWordScreenState extends State<AddWordScreen> {
       return;
     }
 
+    if (!mounted) return;
     setState(() => _isLoading = true);
 
     try {
@@ -141,6 +188,7 @@ class _AddWordScreenState extends State<AddWordScreen> {
       }
     }
 
+    if (!mounted) return;
     setState(() => _isLoading = true);
 
     // Отладка: проверяем wordId
@@ -164,7 +212,7 @@ class _AddWordScreenState extends State<AddWordScreen> {
               type: _selectedType, // 'word' or 'expression'
               mediaType: widget.mediaType,
               mediaPlatform: widget.mediaPlatform,
-              mediaContentTitle: widget.mediaContentTitle,
+              mediaContentTitle: widget.mediaContentTitle ?? (_contentTitleController.text.trim().isNotEmpty ? _contentTitleController.text.trim() : null),
               season: _seasonController.text.trim().isNotEmpty
                   ? int.tryParse(_seasonController.text.trim())
                   : null,
@@ -173,6 +221,24 @@ class _AddWordScreenState extends State<AddWordScreen> {
                   : null,
               timestamp: _timestampController.text.trim().isNotEmpty
                   ? _timestampController.text.trim()
+                  : null,
+              genre: _genreController.text.trim().isNotEmpty
+                  ? _genreController.text.trim()
+                  : null,
+              year: _yearController.text.trim().isNotEmpty
+                  ? int.tryParse(_yearController.text.trim())
+                  : null,
+              director: _directorController.text.trim().isNotEmpty
+                  ? _directorController.text.trim()
+                  : null,
+              host: _hostController.text.trim().isNotEmpty
+                  ? _hostController.text.trim()
+                  : null,
+              guests: _guestsController.text.trim().isNotEmpty
+                  ? _guestsController.text.trim()
+                  : null,
+              album: _albumController.text.trim().isNotEmpty
+                  ? _albumController.text.trim()
                   : null,
             );
 
@@ -196,7 +262,7 @@ class _AddWordScreenState extends State<AddWordScreen> {
               type: _selectedType, // 'word' or 'expression'
               mediaType: widget.mediaType,
               mediaPlatform: widget.mediaPlatform,
-              mediaContentTitle: widget.mediaContentTitle,
+              mediaContentTitle: widget.mediaContentTitle ?? (_contentTitleController.text.trim().isNotEmpty ? _contentTitleController.text.trim() : null),
               season: _seasonController.text.trim().isNotEmpty
                   ? int.tryParse(_seasonController.text.trim())
                   : null,
@@ -205,6 +271,24 @@ class _AddWordScreenState extends State<AddWordScreen> {
                   : null,
               timestamp: _timestampController.text.trim().isNotEmpty
                   ? _timestampController.text.trim()
+                  : null,
+              genre: _genreController.text.trim().isNotEmpty
+                  ? _genreController.text.trim()
+                  : null,
+              year: _yearController.text.trim().isNotEmpty
+                  ? int.tryParse(_yearController.text.trim())
+                  : null,
+              director: _directorController.text.trim().isNotEmpty
+                  ? _directorController.text.trim()
+                  : null,
+              host: _hostController.text.trim().isNotEmpty
+                  ? _hostController.text.trim()
+                  : null,
+              guests: _guestsController.text.trim().isNotEmpty
+                  ? _guestsController.text.trim()
+                  : null,
+              album: _albumController.text.trim().isNotEmpty
+                  ? _albumController.text.trim()
                   : null,
             );
 
@@ -349,6 +433,7 @@ class _AddWordScreenState extends State<AddWordScreen> {
                             ],
                             selected: {_selectedType},
                             onSelectionChanged: (Set<String> newSelection) {
+                              if (!mounted) return;
                               setState(() {
                                 _selectedType = newSelection.first;
                               });
@@ -359,6 +444,34 @@ class _AddWordScreenState extends State<AddWordScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
+
+                  // Поле для названия контента (если mediaType есть, но mediaContentTitle нет)
+                  if (widget.mediaType != null && widget.mediaContentTitle == null && widget.wordId == null) ...[
+                    TextFormField(
+                      controller: _contentTitleController,
+                      decoration: InputDecoration(
+                        labelText: _getContentTitleLabel(),
+                        hintText: _getContentTitleHint(),
+                        prefixIcon: const Icon(Icons.movie),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Veuillez entrer le titre du contenu';
+                        }
+                        return null;
+                      },
+                      onChanged: (value) {
+                        if (!mounted) return;
+                        setState(() {
+                          _hasContentTitle = value.trim().isNotEmpty;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                  ],
 
                   // Word input
                   TextFormField(
@@ -417,6 +530,7 @@ class _AddWordScreenState extends State<AddWordScreen> {
                       ),
                     ),
                     onChanged: (value) {
+                      if (!mounted) return;
                       setState(() {
                         _isManualTranslation = value.trim().isNotEmpty;
                       });
@@ -442,7 +556,7 @@ class _AddWordScreenState extends State<AddWordScreen> {
                             DropdownMenuItem(value: 'en', child: Text('🇬🇧 Anglais')),
                           ],
                           onChanged: (value) {
-                            if (value != null) {
+                            if (value != null && mounted) {
                               setState(() => _sourceLang = value);
                             }
                           },
@@ -464,7 +578,7 @@ class _AddWordScreenState extends State<AddWordScreen> {
                             DropdownMenuItem(value: 'en', child: Text('🇬🇧 Anglais')),
                           ],
                           onChanged: (value) {
-                            if (value != null) {
+                            if (value != null && mounted) {
                               setState(() => _targetLang = value);
                             }
                           },
@@ -474,45 +588,46 @@ class _AddWordScreenState extends State<AddWordScreen> {
                   ),
                   const SizedBox(height: 16),
 
+                  // Для сериалов: сезон и серия (главные поля для всех серий)
+                  if (widget.mediaType == 'series') ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _seasonController,
+                            decoration: InputDecoration(
+                              labelText: 'Saison (optionnel)',
+                              hintText: '1',
+                              prefixIcon: const Icon(Icons.tv),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _episodeController,
+                            decoration: InputDecoration(
+                              labelText: 'Épisode (optionnel)',
+                              hintText: '5',
+                              prefixIcon: const Icon(Icons.video_library),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  
                   // Временные метки (опционально, только для медиа-контента)
                   if (widget.mediaContentTitle != null) ...[
-                    // Для сериалов: сезон и серия
-                    if (widget.mediaType == 'series') ...[
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _seasonController,
-                              decoration: InputDecoration(
-                                labelText: 'Saison (optionnel)',
-                                hintText: '1',
-                                prefixIcon: const Icon(Icons.tv),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              keyboardType: TextInputType.number,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: TextFormField(
-                              controller: _episodeController,
-                              decoration: InputDecoration(
-                                labelText: 'Épisode (optionnel)',
-                                hintText: '5',
-                                prefixIcon: const Icon(Icons.video_library),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              keyboardType: TextInputType.number,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                    ],
                     // Для всех типов медиа: временная метка
                     TextFormField(
                       controller: _timestampController,
@@ -530,9 +645,134 @@ class _AddWordScreenState extends State<AddWordScreen> {
                     ),
                     const SizedBox(height: 16),
                   ],
+                  
+                  // Дополнительные поля для режима "par contenu" (только при добавлении нового слова)
+                  // Показываем если mediaContentTitle передан ИЛИ если введен в поле contentTitle
+                  if (widget.mediaType != null && widget.wordId == null && 
+                      (widget.mediaContentTitle != null || _hasContentTitle)) ...[
+                    // Дополнительные поля в зависимости от типа медиа
+                    // Для films и series: жанр, год, режиссер
+                    if (widget.mediaType == 'films' || widget.mediaType == 'series') ...[
+                      TextFormField(
+                        controller: _genreController,
+                        decoration: InputDecoration(
+                          labelText: 'Genre (optionnel)',
+                          hintText: 'Ex: Action, Drama, Comedy',
+                          prefixIcon: const Icon(Icons.category),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _yearController,
+                              decoration: InputDecoration(
+                                labelText: 'Année (optionnel)',
+                                hintText: '2023',
+                                prefixIcon: const Icon(Icons.calendar_today),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              keyboardType: TextInputType.number,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _directorController,
+                              decoration: InputDecoration(
+                                labelText: 'Réalisateur (optionnel)',
+                                hintText: 'Christopher Nolan',
+                                prefixIcon: const Icon(Icons.person),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    
+                    // Для podcasts: ведущий, приглашенные
+                    if (widget.mediaType == 'podcasts') ...[
+                      TextFormField(
+                        controller: _hostController,
+                        decoration: InputDecoration(
+                          labelText: 'Animateur (optionnel)',
+                          hintText: 'Nom de l\'animateur',
+                          prefixIcon: const Icon(Icons.mic),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _guestsController,
+                        decoration: InputDecoration(
+                          labelText: 'Invités (optionnel)',
+                          hintText: 'Noms des invités (séparés par des virgules)',
+                          prefixIcon: const Icon(Icons.people),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _yearController,
+                        decoration: InputDecoration(
+                          labelText: 'Année (optionnel)',
+                          hintText: '2023',
+                          prefixIcon: const Icon(Icons.calendar_today),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        keyboardType: TextInputType.number,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    
+                    // Для music: альбом, год
+                    if (widget.mediaType == 'music') ...[
+                      TextFormField(
+                        controller: _albumController,
+                        decoration: InputDecoration(
+                          labelText: 'Album (optionnel)',
+                          hintText: 'Nom de l\'album',
+                          prefixIcon: const Icon(Icons.album),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _yearController,
+                        decoration: InputDecoration(
+                          labelText: 'Année (optionnel)',
+                          hintText: '2023',
+                          prefixIcon: const Icon(Icons.calendar_today),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        keyboardType: TextInputType.number,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ],
 
                   // Galaxy selector (только для контекста жизни, не для медиа)
-                  if (widget.mediaContentTitle == null) ...[
+                  if (widget.mediaContentTitle == null && widget.mediaType == null) ...[
                     DropdownButtonFormField<String>(
                       value: _selectedGalaxy,
                       decoration: InputDecoration(
@@ -549,6 +789,7 @@ class _AddWordScreenState extends State<AddWordScreen> {
                         );
                       }).toList(),
                       onChanged: (value) {
+                        if (!mounted) return;
                         setState(() {
                           _selectedGalaxy = value;
                           _selectedSubtopic = null; // Reset subtopic
@@ -581,6 +822,7 @@ class _AddWordScreenState extends State<AddWordScreen> {
                           );
                         }).toList(),
                         onChanged: (value) {
+                          if (!mounted) return;
                           setState(() {
                             _selectedSubtopic = value;
                           });

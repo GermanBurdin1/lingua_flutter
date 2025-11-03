@@ -35,8 +35,21 @@ class _MediaPlatformContentScreenState extends State<MediaPlatformContentScreen>
     if (_isThemeMode) {
       _showAddThemeDialog();
     } else {
-      _showAddContentDialog();
+      // В режиме "par contenu" открываем форму добавления слова с дополнительными полями
+      _openAddWordForm();
     }
+  }
+  
+  void _openAddWordForm() async {
+    final result = await context.push<bool>(
+      '/add-word',
+      extra: {
+        'mediaType': widget.mediaType,
+        'mediaPlatform': widget.platformName,
+        // mediaContentTitle будет null, так как контент еще не выбран
+        // Пользователь может выбрать контент или добавить новое слово для конкретного контента
+      },
+    );
   }
 
   Future<void> _showAddThemeDialog() async {
@@ -159,11 +172,12 @@ class _MediaPlatformContentScreenState extends State<MediaPlatformContentScreen>
         title: Text(widget.platformName.toUpperCase()),
         actions: [
           // Кнопка добавления
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline, size: 28),
-            onPressed: _addNew,
-            tooltip: _isThemeMode ? 'Ajouter un thème' : 'Ajouter un contenu',
-          ),
+          if (_isThemeMode)
+            IconButton(
+              icon: const Icon(Icons.add_circle_outline, size: 28),
+              onPressed: _addNew,
+              tooltip: 'Ajouter un thème',
+            ),
         ],
       ),
       body: CosmicBackground(
@@ -305,57 +319,92 @@ class _MediaPlatformContentScreenState extends State<MediaPlatformContentScreen>
   }
 
   Widget _buildContentMode() {
-    if (_contentList.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.movie_creation_outlined,
-              size: 80,
-              color: Colors.grey.withOpacity(0.5),
+    final themeProvider = context.watch<ThemeProvider>();
+    
+    return Column(
+      children: [
+        // Кнопка добавления слова
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: themeProvider.isDarkMode
+                    ? [const Color(0xFF00F5FF), const Color(0xFF00C2FF)]
+                    : [const Color(0xFF0066FF), const Color(0xFF0080FF)],
+              ),
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            Text(
-              'Aucun contenu ajouté',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Colors.grey,
+            child: ElevatedButton.icon(
+              onPressed: _openAddWordForm,
+              icon: const Icon(Icons.add),
+              label: const Text('Ajouter un mot ou une expression par contenu'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                minimumSize: const Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
               ),
             ),
-            const SizedBox(height: 10),
-            Text(
-              'Appuyez sur + pour ajouter',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _contentList.length,
-      itemBuilder: (context, index) {
-        final content = _contentList[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-            leading: const Icon(Icons.movie, size: 32),
-            title: Text(content, style: const TextStyle(fontWeight: FontWeight.w600)),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () {
-              // Navigate to vocabulary screen for this content
-              context.push(
-                '/media-content-words/${Uri.encodeComponent(widget.mediaType)}/'
-                '${Uri.encodeComponent(widget.platformName)}/'
-                '${Uri.encodeComponent(content)}',
-              );
-            },
           ),
-        );
-      },
+        ),
+        
+        // Список контента или пустое состояние
+        Expanded(
+          child: _contentList.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.movie_creation_outlined,
+                        size: 80,
+                        color: Colors.grey.withOpacity(0.5),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Aucun contenu ajouté',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _contentList.length,
+                  itemBuilder: (context, index) {
+                    final content = _contentList[index];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: ListTile(
+                        leading: const Icon(Icons.movie, size: 32),
+                        title: Text(content, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                        onTap: () {
+                          // Navigate to vocabulary screen for this content
+                          context.push(
+                            '/media-content-words/${Uri.encodeComponent(widget.mediaType)}/'
+                            '${Uri.encodeComponent(widget.platformName)}/'
+                            '${Uri.encodeComponent(content)}',
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 }

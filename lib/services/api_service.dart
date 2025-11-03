@@ -251,6 +251,12 @@ class ApiService {
     int? season,
     int? episode,
     String? timestamp,
+    String? genre,
+    int? year,
+    String? director,
+    String? host,
+    String? guests,
+    String? album,
   }) async {
     await loadTokens();
 
@@ -266,6 +272,12 @@ class ApiService {
       'season': season,
       'episode': episode,
       'timestamp': timestamp,
+      'genre': genre,
+      'year': year,
+      'director': director,
+      'host': host,
+      'guests': guests,
+      'album': album,
     };
 
     // Если есть перевод, добавляем массив translations
@@ -316,6 +328,12 @@ class ApiService {
         season: season,
         episode: episode,
         timestamp: timestamp,
+        genre: genre,
+        year: year,
+        director: director,
+        host: host,
+        guests: guests,
+        album: album,
       );
     } else {
       throw Exception('Ошибка добавления слова');
@@ -377,6 +395,12 @@ class ApiService {
     int? season,
     int? episode,
     String? timestamp,
+    String? genre,
+    int? year,
+    String? director,
+    String? host,
+    String? guests,
+    String? album,
   }) async {
     await loadTokens();
 
@@ -393,6 +417,12 @@ class ApiService {
     if (season != null) body['season'] = season;
     if (episode != null) body['episode'] = episode;
     if (timestamp != null) body['timestamp'] = timestamp;
+    if (genre != null) body['genre'] = genre;
+    if (year != null) body['year'] = year;
+    if (director != null) body['director'] = director;
+    if (host != null) body['host'] = host;
+    if (guests != null) body['guests'] = guests;
+    if (album != null) body['album'] = album;
 
     // Если есть перевод, добавляем массив translations
     if (translation != null && translation.isNotEmpty) {
@@ -441,6 +471,12 @@ class ApiService {
         season: season,
         episode: episode,
         timestamp: timestamp,
+        genre: genre,
+        year: year,
+        director: director,
+        host: host,
+        guests: guests,
+        album: album,
       );
     } else {
       throw Exception('Ошибка обновления слова');

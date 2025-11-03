@@ -14,6 +14,13 @@ class Word {
   final int? season; // Сезон (для сериалов)
   final int? episode; // Серия (для сериалов)
   final String? timestamp; // Временная метка: "12:34"
+  // Дополнительные поля для медиа-контента
+  final String? genre; // Жанр (films/series)
+  final int? year; // Год выпуска (films/series/music)
+  final String? director; // Режиссер (films/series)
+  final String? host; // Ведущий (podcasts)
+  final String? guests; // Приглашенные (podcasts)
+  final String? album; // Альбом (music)
 
   Word({
     required this.id,
@@ -31,6 +38,12 @@ class Word {
     this.season,
     this.episode,
     this.timestamp,
+    this.genre,
+    this.year,
+    this.director,
+    this.host,
+    this.guests,
+    this.album,
   });
 
   factory Word.fromJson(Map<String, dynamic> json) {
@@ -89,6 +102,12 @@ class Word {
       season: json['season'] as int?,
       episode: json['episode'] as int?,
       timestamp: json['timestamp'] as String?,
+      genre: json['genre'] as String?,
+      year: json['year'] as int?,
+      director: json['director'] as String?,
+      host: json['host'] as String?,
+      guests: json['guests'] as String?,
+      album: json['album'] as String?,
     );
   }
 
@@ -109,6 +128,12 @@ class Word {
       'season': season,
       'episode': episode,
       'timestamp': timestamp,
+      'genre': genre,
+      'year': year,
+      'director': director,
+      'host': host,
+      'guests': guests,
+      'album': album,
     };
   }
 }

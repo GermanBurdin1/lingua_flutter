@@ -388,32 +388,6 @@ class _MainScreenState extends State<MainScreen> {
                           context.push('/media-galaxies');
                         },
                       ),
-                      const SizedBox(height: 16),
-                      _MenuButton(
-                        icon: Icons.school,
-                        label: 'Grammaire',
-                        gradient: LinearGradient(
-                          colors: themeProvider.isDarkMode
-                              ? [const Color(0xFF00FF88), const Color(0xFF00DD77)]
-                              : [const Color(0xFF00C853), const Color(0xFF00E676)],
-                        ),
-                        onTap: () {
-                          // TODO: Navigate to grammar
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      _MenuButton(
-                        icon: Icons.person,
-                        label: 'Profil',
-                        gradient: LinearGradient(
-                          colors: themeProvider.isDarkMode
-                              ? [const Color(0xFFFF6B9D), const Color(0xFFFF8BA0)]
-                              : [const Color(0xFFFF1744), const Color(0xFFFF5252)],
-                        ),
-                        onTap: () {
-                          // TODO: Navigate to profile
-                        },
-                      ),
                     ],
                   ),
                 ),

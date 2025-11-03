@@ -69,6 +69,12 @@ class VocabularyProvider with ChangeNotifier {
     int? season,
     int? episode,
     String? timestamp,
+    String? genre,
+    int? year,
+    String? director,
+    String? host,
+    String? guests,
+    String? album,
   }) async {
     try {
       final newWord = await _apiService.addWord(
@@ -85,6 +91,12 @@ class VocabularyProvider with ChangeNotifier {
         season: season,
         episode: episode,
         timestamp: timestamp,
+        genre: genre,
+        year: year,
+        director: director,
+        host: host,
+        guests: guests,
+        album: album,
       );
       _words.insert(0, newWord);
       notifyListeners();
@@ -110,6 +122,12 @@ class VocabularyProvider with ChangeNotifier {
     int? season,
     int? episode,
     String? timestamp,
+    String? genre,
+    int? year,
+    String? director,
+    String? host,
+    String? guests,
+    String? album,
   }) async {
     try {
       final updatedWord = await _apiService.updateWord(
@@ -127,6 +145,12 @@ class VocabularyProvider with ChangeNotifier {
         season: season,
         episode: episode,
         timestamp: timestamp,
+        genre: genre,
+        year: year,
+        director: director,
+        host: host,
+        guests: guests,
+        album: album,
       );
       // Обновляем слово в списке
       final index = _words.indexWhere((w) => w.id == wordId);
