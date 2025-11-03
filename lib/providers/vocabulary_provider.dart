@@ -81,6 +81,52 @@ class VocabularyProvider with ChangeNotifier {
     }
   }
   
+  Future<void> updateWord({
+    required int wordId,
+    String? word,
+    String? sourceLang,
+    String? targetLang,
+    String? galaxy,
+    String? subtopic,
+    String? translation,
+    String? type,
+    String? mediaType,
+    String? mediaPlatform,
+    String? mediaContentTitle,
+    int? season,
+    int? episode,
+    String? timestamp,
+  }) async {
+    try {
+      final updatedWord = await _apiService.updateWord(
+        wordId: wordId,
+        word: word,
+        sourceLang: sourceLang,
+        targetLang: targetLang,
+        galaxy: galaxy,
+        subtopic: subtopic,
+        translation: translation,
+        type: type,
+        mediaType: mediaType,
+        mediaPlatform: mediaPlatform,
+        mediaContentTitle: mediaContentTitle,
+        season: season,
+        episode: episode,
+        timestamp: timestamp,
+      );
+      // Обновляем слово в списке
+      final index = _words.indexWhere((w) => w.id == wordId);
+      if (index != -1) {
+        _words[index] = updatedWord;
+      }
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      rethrow;
+    }
+  }
+  
   Future<String> requestTranslation({
     required String word,
     required String sourceLang,

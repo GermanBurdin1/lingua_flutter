@@ -34,10 +34,26 @@ class Word {
   });
 
   factory Word.fromJson(Map<String, dynamic> json) {
+    // Извлекаем перевод из массива translations, если он есть
+    String? translation;
+    
+    // Сначала пробуем получить из прямого поля (для обратной совместимости)
+    if (json['translation'] != null) {
+      translation = json['translation'] as String?;
+    } 
+    // Если нет прямого поля, извлекаем из массива translations
+    else if (json['translations'] != null && json['translations'] is List) {
+      final translations = json['translations'] as List;
+      if (translations.isNotEmpty && translations[0] is Map) {
+        final firstTranslation = translations[0] as Map<String, dynamic>;
+        translation = firstTranslation['target'] as String?;
+      }
+    }
+    
     return Word(
       id: json['id'] is String ? int.parse(json['id']) : json['id'],
       word: json['word'] as String,
-      translation: json['translation'] as String?,
+      translation: translation,
       sourceLang: json['sourceLang'] as String? ?? 'fr',
       targetLang: json['targetLang'] as String? ?? 'ru',
       galaxy: json['galaxy'] as String?,

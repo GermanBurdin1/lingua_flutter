@@ -50,7 +50,14 @@ class _AddWordScreenState extends State<AddWordScreen> {
   @override
   void initState() {
     super.initState();
+    print('🔍 AddWordScreen initState: wordId = ${widget.wordId}');
+    print('🔍 AddWordScreen initState: initialWord = ${widget.initialWord}');
+    print('🔍 AddWordScreen initState: initialTranslation = ${widget.initialTranslation}');
     _wordController.text = widget.initialWord ?? '';
+    _translationController.text = widget.initialTranslation ?? '';
+    if (widget.initialTranslation != null && widget.initialTranslation!.isNotEmpty) {
+      _isManualTranslation = true;
+    }
     _selectedGalaxy = widget.initialGalaxy;
     _selectedSubtopic = widget.initialSubtopic;
   }
@@ -136,36 +143,77 @@ class _AddWordScreenState extends State<AddWordScreen> {
 
     setState(() => _isLoading = true);
 
-    try {
-      await context.read<VocabularyProvider>().addWord(
-            word: _wordController.text.trim(),
-            sourceLang: _sourceLang,
-            targetLang: _targetLang,
-            galaxy: _selectedGalaxy,
-            subtopic: _selectedSubtopic,
-            translation: _translationController.text.trim().isNotEmpty
-                ? _translationController.text.trim()
-                : null,
-            type: _selectedType, // 'word' or 'expression'
-            mediaType: widget.mediaType,
-            mediaPlatform: widget.mediaPlatform,
-            mediaContentTitle: widget.mediaContentTitle,
-            season: _seasonController.text.trim().isNotEmpty
-                ? int.tryParse(_seasonController.text.trim())
-                : null,
-            episode: _episodeController.text.trim().isNotEmpty
-                ? int.tryParse(_episodeController.text.trim())
-                : null,
-            timestamp: _timestampController.text.trim().isNotEmpty
-                ? _timestampController.text.trim()
-                : null,
-          );
+    // Отладка: проверяем wordId
+    print('🔍 _saveWord: wordId = ${widget.wordId}');
+    print('🔍 _saveWord: wordId type = ${widget.wordId.runtimeType}');
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Mot ajouté avec succès!')),
-        );
-        Navigator.pop(context, true);
+    try {
+      // Если есть wordId, обновляем слово, иначе создаем новое
+      if (widget.wordId != null) {
+        print('🔍 Using updateWord for wordId: ${widget.wordId}');
+        await context.read<VocabularyProvider>().updateWord(
+              wordId: widget.wordId!,
+              word: _wordController.text.trim(),
+              sourceLang: _sourceLang,
+              targetLang: _targetLang,
+              galaxy: _selectedGalaxy,
+              subtopic: _selectedSubtopic,
+              translation: _translationController.text.trim().isNotEmpty
+                  ? _translationController.text.trim()
+                  : null,
+              type: _selectedType, // 'word' or 'expression'
+              mediaType: widget.mediaType,
+              mediaPlatform: widget.mediaPlatform,
+              mediaContentTitle: widget.mediaContentTitle,
+              season: _seasonController.text.trim().isNotEmpty
+                  ? int.tryParse(_seasonController.text.trim())
+                  : null,
+              episode: _episodeController.text.trim().isNotEmpty
+                  ? int.tryParse(_episodeController.text.trim())
+                  : null,
+              timestamp: _timestampController.text.trim().isNotEmpty
+                  ? _timestampController.text.trim()
+                  : null,
+            );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('✅ Mot modifié avec succès!')),
+          );
+          Navigator.pop(context, true);
+        }
+      } else {
+        print('🔍 Using addWord (no wordId)');
+        await context.read<VocabularyProvider>().addWord(
+              word: _wordController.text.trim(),
+              sourceLang: _sourceLang,
+              targetLang: _targetLang,
+              galaxy: _selectedGalaxy,
+              subtopic: _selectedSubtopic,
+              translation: _translationController.text.trim().isNotEmpty
+                  ? _translationController.text.trim()
+                  : null,
+              type: _selectedType, // 'word' or 'expression'
+              mediaType: widget.mediaType,
+              mediaPlatform: widget.mediaPlatform,
+              mediaContentTitle: widget.mediaContentTitle,
+              season: _seasonController.text.trim().isNotEmpty
+                  ? int.tryParse(_seasonController.text.trim())
+                  : null,
+              episode: _episodeController.text.trim().isNotEmpty
+                  ? int.tryParse(_episodeController.text.trim())
+                  : null,
+              timestamp: _timestampController.text.trim().isNotEmpty
+                  ? _timestampController.text.trim()
+                  : null,
+            );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('✅ Mot ajouté avec succès!')),
+          );
+          Navigator.pop(context, true);
+        }
       }
     } catch (e) {
       if (mounted) {

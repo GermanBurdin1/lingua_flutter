@@ -107,6 +107,26 @@ final GoRouter _router = GoRouter(
         path: '/add-word',
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
+          print('🔍 Router: extra = $extra');
+          
+          // Безопасное преобразование wordId (может быть int или String)
+          int? wordId;
+          if (extra != null && extra.containsKey('wordId')) {
+            final rawWordId = extra['wordId'];
+            print('🔍 Router: wordId raw = $rawWordId');
+            print('🔍 Router: wordId type = ${rawWordId?.runtimeType}');
+            
+            if (rawWordId is int) {
+              wordId = rawWordId;
+            } else if (rawWordId is String) {
+              wordId = int.tryParse(rawWordId);
+            } else if (rawWordId != null) {
+              // Попытка преобразования через toString
+              wordId = int.tryParse(rawWordId.toString());
+            }
+            print('🔍 Router: wordId parsed = $wordId');
+          }
+          
           return AddWordScreen(
             initialWord: extra?['word'] as String?,
             initialTranslation: extra?['translation'] as String?,
@@ -115,7 +135,7 @@ final GoRouter _router = GoRouter(
             mediaType: extra?['mediaType'] as String?,
             mediaPlatform: extra?['mediaPlatform'] as String?,
             mediaContentTitle: extra?['mediaContentTitle'] as String?,
-            wordId: extra?['wordId'] as int?,
+            wordId: wordId,
           );
         },
       ),

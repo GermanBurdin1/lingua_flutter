@@ -361,6 +361,92 @@ class ApiService {
     }
   }
 
+  // Обновить слово
+  Future<Word> updateWord({
+    required int wordId,
+    String? word,
+    String? sourceLang,
+    String? targetLang,
+    String? galaxy,
+    String? subtopic,
+    String? translation,
+    String? type,
+    String? mediaType,
+    String? mediaPlatform,
+    String? mediaContentTitle,
+    int? season,
+    int? episode,
+    String? timestamp,
+  }) async {
+    await loadTokens();
+
+    // Формируем данные для обновления
+    final Map<String, dynamic> body = {};
+    
+    if (word != null && word.isNotEmpty) body['word'] = word;
+    if (galaxy != null) body['galaxy'] = galaxy;
+    if (subtopic != null) body['subtopic'] = subtopic;
+    if (type != null) body['type'] = type;
+    if (mediaType != null) body['mediaType'] = mediaType;
+    if (mediaPlatform != null) body['mediaPlatform'] = mediaPlatform;
+    if (mediaContentTitle != null) body['mediaContentTitle'] = mediaContentTitle;
+    if (season != null) body['season'] = season;
+    if (episode != null) body['episode'] = episode;
+    if (timestamp != null) body['timestamp'] = timestamp;
+
+    // Если есть перевод, добавляем массив translations
+    if (translation != null && translation.isNotEmpty) {
+      // Используем слово из параметра, или пустую строку (но это не должно произойти)
+      final sourceWord = word ?? '';
+      body['translations'] = [
+        {
+          'id': 0,
+          'lexiconId': wordId,
+          'source': sourceWord,
+          'target': translation,
+          'sourceLang': sourceLang ?? 'fr',
+          'targetLang': targetLang ?? 'ru',
+          'meaning': '',
+          'example': null,
+        }
+      ];
+    }
+
+    print('📱 Updating word $wordId');
+    print('📱 Body: ${json.encode(body)}');
+
+    // 📱 Используем специальный endpoint для мобильного приложения
+    final response = await http.patch(
+      Uri.parse('$vocabularyBaseUrl/lexicon/mobile/$wordId'),
+      headers: _headers,
+      body: json.encode(body),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return Word.fromJson(json.decode(response.body));
+    } else if (response.statusCode == 401) {
+      await refreshAccessToken();
+      return updateWord(
+        wordId: wordId,
+        word: word,
+        sourceLang: sourceLang,
+        targetLang: targetLang,
+        galaxy: galaxy,
+        subtopic: subtopic,
+        translation: translation,
+        type: type,
+        mediaType: mediaType,
+        mediaPlatform: mediaPlatform,
+        mediaContentTitle: mediaContentTitle,
+        season: season,
+        episode: episode,
+        timestamp: timestamp,
+      );
+    } else {
+      throw Exception('Ошибка обновления слова');
+    }
+  }
+
   // Удалить слово
   Future<void> deleteWord(int wordId) async {
     await loadTokens();
