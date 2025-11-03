@@ -34,28 +34,51 @@ class Word {
   });
 
   factory Word.fromJson(Map<String, dynamic> json) {
-    // Извлекаем перевод из массива translations, если он есть
+    // Извлекаем перевод и языки из массива translations, если он есть
     String? translation;
+    String sourceLang = 'fr'; // Default
+    String targetLang = 'ru'; // Default
     
     // Сначала пробуем получить из прямого поля (для обратной совместимости)
     if (json['translation'] != null) {
       translation = json['translation'] as String?;
-    } 
-    // Если нет прямого поля, извлекаем из массива translations
-    else if (json['translations'] != null && json['translations'] is List) {
+    }
+    
+    // Если есть массив translations, извлекаем оттуда
+    if (json['translations'] != null && json['translations'] is List) {
       final translations = json['translations'] as List;
       if (translations.isNotEmpty && translations[0] is Map) {
         final firstTranslation = translations[0] as Map<String, dynamic>;
-        translation = firstTranslation['target'] as String?;
+        
+        // Извлекаем перевод
+        if (translation == null) {
+          translation = firstTranslation['target'] as String?;
+        }
+        
+        // Извлекаем языки из первого перевода
+        if (firstTranslation['sourceLang'] != null) {
+          sourceLang = firstTranslation['sourceLang'] as String;
+        }
+        if (firstTranslation['targetLang'] != null) {
+          targetLang = firstTranslation['targetLang'] as String;
+        }
       }
+    }
+    
+    // Если языки не найдены в translations, пробуем из корня (для обратной совместимости)
+    if (json['sourceLang'] != null) {
+      sourceLang = json['sourceLang'] as String;
+    }
+    if (json['targetLang'] != null) {
+      targetLang = json['targetLang'] as String;
     }
     
     return Word(
       id: json['id'] is String ? int.parse(json['id']) : json['id'],
       word: json['word'] as String,
       translation: translation,
-      sourceLang: json['sourceLang'] as String? ?? 'fr',
-      targetLang: json['targetLang'] as String? ?? 'ru',
+      sourceLang: sourceLang,
+      targetLang: targetLang,
       galaxy: json['galaxy'] as String?,
       subtopic: json['subtopic'] as String?,
       status: json['status'] as String?,
