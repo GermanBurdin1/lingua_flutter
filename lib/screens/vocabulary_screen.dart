@@ -228,7 +228,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                   ),
                   const SizedBox(height: 16),
                 ],
-                if (word.galaxy != null) ...[
+                if (word.galaxy != null && word.galaxy!.isNotEmpty) ...[
                   Text(
                     'Galaxie',
                     style: TextStyle(
@@ -244,7 +244,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                   ),
                   const SizedBox(height: 8),
                 ],
-                if (word.subtopic != null) ...[
+                if (word.subtopic != null && word.subtopic!.isNotEmpty) ...[
                   Text(
                     'Sous-thème',
                     style: TextStyle(
@@ -252,10 +252,120 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                       color: isDark ? Colors.white70 : Colors.black87,
                     ),
                   ),
+                  InkWell(
+                    onTap: () {
+                      Navigator.pop(dialogContext);
+                      // Переход к подтеме
+                      context.push(
+                        '/vocabulary/${Uri.encodeComponent(word.galaxy ?? '')}/'
+                        '${Uri.encodeComponent(word.subtopic ?? '')}',
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.blue.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.category,
+                            size: 16,
+                            color: Colors.blue[700],
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '${word.galaxy} > ${word.subtopic}',
+                              style: TextStyle(
+                                color: Colors.blue[700],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_forward,
+                            size: 16,
+                            color: Colors.blue[700],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                // Информация о медиа-контенте (если есть)
+                if (word.mediaContentTitle != null && word.mediaContentTitle!.isNotEmpty) ...[
                   Text(
-                    word.subtopic!,
+                    'Média',
                     style: TextStyle(
-                      color: isDark ? Colors.white60 : Colors.black54,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white70 : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () {
+                      Navigator.pop(dialogContext);
+                      // Переход к списку контента
+                      context.push(
+                        '/media-content-words/${Uri.encodeComponent(word.mediaType ?? '')}/'
+                        '${Uri.encodeComponent(word.mediaPlatform ?? '')}/'
+                        '${Uri.encodeComponent(word.mediaContentTitle ?? '')}',
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.purple.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.purple.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.movie,
+                            size: 16,
+                            color: Colors.purple[700],
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  word.mediaContentTitle ?? '',
+                                  style: TextStyle(
+                                    color: Colors.purple[700],
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                if (word.mediaPlatform != null && word.mediaPlatform!.isNotEmpty)
+                                  Text(
+                                    word.mediaPlatform ?? '',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.purple[600],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_forward,
+                            size: 16,
+                            color: Colors.purple[700],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -629,60 +739,167 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                               title: Row(
                                 children: [
                                   Expanded(
-                                    child: Text(
-                                      word.word,
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                  // Отображение языков
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: themeProvider.isDarkMode
-                                          ? const Color(0xFF00F5FF).withOpacity(0.2)
-                                          : const Color(0xFF0066FF).withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: themeProvider.isDarkMode
-                                            ? const Color(0xFF00F5FF).withOpacity(0.3)
-                                            : const Color(0xFF0066FF).withOpacity(0.3),
-                                        width: 1,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          _getLangName(word.sourceLang).split(' ')[0],
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: themeProvider.isDarkMode
-                                                ? const Color(0xFF00F5FF)
-                                                : const Color(0xFF0066FF),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                word.word,
+                                                style: const TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ),
+                                            // Пометка что слово из медиа (если есть mediaContentTitle)
+                                            if (word.mediaContentTitle != null && 
+                                                widget.galaxyName != null && 
+                                                widget.subtopicName != null)
+                                              GestureDetector(
+                                                onTap: () {
+                                                  // Переход к списку контента
+                                                  context.push(
+                                                    '/media-content-words/${Uri.encodeComponent(word.mediaType ?? '')}/'
+                                                    '${Uri.encodeComponent(word.mediaPlatform ?? '')}/'
+                                                    '${Uri.encodeComponent(word.mediaContentTitle ?? '')}',
+                                                  );
+                                                },
+                                                child: Container(
+                                                  margin: const EdgeInsets.only(left: 8),
+                                                  padding: const EdgeInsets.symmetric(
+                                                    horizontal: 6,
+                                                    vertical: 2,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.purple.withOpacity(0.2),
+                                                    borderRadius: BorderRadius.circular(6),
+                                                    border: Border.all(
+                                                      color: Colors.purple.withOpacity(0.5),
+                                                      width: 1,
+                                                    ),
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      Icon(
+                                                        Icons.movie,
+                                                        size: 14,
+                                                        color: Colors.purple[700],
+                                                      ),
+                                                      const SizedBox(width: 4),
+                                                      Text(
+                                                        word.mediaContentTitle ?? '',
+                                                        style: TextStyle(
+                                                          fontSize: 10,
+                                                          color: Colors.purple[700],
+                                                          fontWeight: FontWeight.w500,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            // Пометка что слово связано с подтемой (если есть galaxy/subtopic и мы в режиме контента)
+                                            if (word.galaxy != null && 
+                                                word.subtopic != null &&
+                                                widget.mediaContentTitle != null)
+                                              GestureDetector(
+                                                onTap: () {
+                                                  // Переход к подтеме
+                                                  context.push(
+                                                    '/vocabulary/${Uri.encodeComponent(word.galaxy ?? '')}/'
+                                                    '${Uri.encodeComponent(word.subtopic ?? '')}',
+                                                  );
+                                                },
+                                                child: Container(
+                                                  margin: const EdgeInsets.only(left: 8),
+                                                  padding: const EdgeInsets.symmetric(
+                                                    horizontal: 6,
+                                                    vertical: 2,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.blue.withOpacity(0.2),
+                                                    borderRadius: BorderRadius.circular(6),
+                                                    border: Border.all(
+                                                      color: Colors.blue.withOpacity(0.5),
+                                                      width: 1,
+                                                    ),
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      Icon(
+                                                        Icons.category,
+                                                        size: 14,
+                                                        color: Colors.blue[700],
+                                                      ),
+                                                      const SizedBox(width: 4),
+                                                      Text(
+                                                        word.subtopic ?? '',
+                                                        style: TextStyle(
+                                                          fontSize: 10,
+                                                          color: Colors.blue[700],
+                                                          fontWeight: FontWeight.w500,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 4),
+                                        // Отображение языков
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
                                           ),
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Icon(
-                                          Icons.arrow_forward,
-                                          size: 12,
-                                          color: themeProvider.isDarkMode
-                                              ? const Color(0xFF00F5FF)
-                                              : const Color(0xFF0066FF),
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          _getLangName(word.targetLang).split(' ')[0],
-                                          style: TextStyle(
-                                            fontSize: 12,
+                                          decoration: BoxDecoration(
                                             color: themeProvider.isDarkMode
-                                                ? const Color(0xFF00F5FF)
-                                                : const Color(0xFF0066FF),
+                                                ? const Color(0xFF00F5FF).withOpacity(0.2)
+                                                : const Color(0xFF0066FF).withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(
+                                              color: themeProvider.isDarkMode
+                                                  ? const Color(0xFF00F5FF).withOpacity(0.3)
+                                                  : const Color(0xFF0066FF).withOpacity(0.3),
+                                              width: 1,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                _getLangName(word.sourceLang).split(' ')[0],
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: themeProvider.isDarkMode
+                                                      ? const Color(0xFF00F5FF)
+                                                      : const Color(0xFF0066FF),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Icon(
+                                                Icons.arrow_forward,
+                                                size: 12,
+                                                color: themeProvider.isDarkMode
+                                                    ? const Color(0xFF00F5FF)
+                                                    : const Color(0xFF0066FF),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                _getLangName(word.targetLang).split(' ')[0],
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: themeProvider.isDarkMode
+                                                      ? const Color(0xFF00F5FF)
+                                                      : const Color(0xFF0066FF),
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ],

@@ -333,8 +333,12 @@ class _AddWordScreenState extends State<AddWordScreen> {
       return;
     }
 
-    // Проверяем galaxy/subtopic только если НЕ медиа-контент
-    if (widget.mediaContentTitle == null) {
+    // Проверяем galaxy/subtopic только если НЕ медиа-контент И НЕ режим "par contenu"
+    // В режиме "par contenu" galaxy/subtopic опциональны
+    if (widget.mediaContentTitle == null && 
+        widget.initialGalaxy != null && 
+        widget.initialSubtopic != null) {
+      // Это режим "par thème" - galaxy/subtopic обязательны
       if (_selectedGalaxy == null || _selectedSubtopic == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Veuillez sélectionner une galaxie et un sous-thème')),
@@ -1060,12 +1064,19 @@ class _AddWordScreenState extends State<AddWordScreen> {
                     ],
                   ],
 
-                  // Galaxy selector (только для контекста жизни, не для медиа)
-                  if (widget.mediaContentTitle == null && widget.mediaType == null) ...[
+                  // Galaxy и Subtopic selector
+                  // Показываем если:
+                  // 1. Это режим "par thème" (есть initialGalaxy/initialSubtopic в widget) - обязательные поля
+                  // 2. Это режим "par contenu" (есть mediaType) - опциональные поля для связи контента с темой
+                  // Показываем для всех типов медиа (films, series, music, podcasts)
+                  if ((widget.initialGalaxy != null && widget.initialSubtopic != null) || 
+                      (widget.mediaType != null)) ...[
                     DropdownButtonFormField<String>(
                       value: _selectedGalaxy,
                       decoration: InputDecoration(
-                        labelText: 'Galaxie',
+                        labelText: widget.initialGalaxy != null && widget.initialSubtopic != null 
+                            ? 'Galaxie' 
+                            : 'Galaxie (optionnel - pour lier à un thème)',
                         prefixIcon: const Icon(Icons.category),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -1085,7 +1096,8 @@ class _AddWordScreenState extends State<AddWordScreen> {
                         });
                       },
                       validator: (value) {
-                        if (value == null) {
+                        // Galaxy обязательна только в режиме "par thème"
+                        if (value == null && widget.initialGalaxy != null && widget.initialSubtopic != null) {
                           return 'Veuillez sélectionner une galaxie';
                         }
                         return null;
@@ -1098,7 +1110,9 @@ class _AddWordScreenState extends State<AddWordScreen> {
                       DropdownButtonFormField<String>(
                         value: _selectedSubtopic,
                         decoration: InputDecoration(
-                          labelText: 'Sous-thème',
+                          labelText: widget.initialGalaxy != null && widget.initialSubtopic != null 
+                              ? 'Sous-thème' 
+                              : 'Sous-thème (optionnel)',
                           prefixIcon: const Icon(Icons.label),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -1117,7 +1131,9 @@ class _AddWordScreenState extends State<AddWordScreen> {
                           });
                         },
                         validator: (value) {
-                          if (value == null) {
+                          // Subtopic обязательна только в режиме "par thème"
+                          // В режиме "par contenu" это опционально
+                          if (value == null && widget.initialGalaxy != null && widget.initialSubtopic != null) {
                             return 'Veuillez sélectionner un sous-thème';
                           }
                           return null;

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../models/galaxy.dart';
 import '../providers/theme_provider.dart';
+import '../providers/vocabulary_provider.dart';
 import '../widgets/cosmic_background.dart';
 
 // 📱 [MOBILE APP ONLY] Объединённый экран для платформы с тогглером режимов
@@ -24,11 +25,24 @@ class _MediaPlatformContentScreenState extends State<MediaPlatformContentScreen>
   bool _isThemeMode = true; // true = Par Thème, false = Par Contenu
   List<String> _customThemes = []; // Пользовательские темы
   List<String> _contentList = []; // Список контента (фильмы/сериалы и т.д.)
+  bool _isLoadingContent = false;
 
   void _toggleMode() {
     setState(() {
       _isThemeMode = !_isThemeMode;
     });
+    
+    // При переключении на режим "par contenu" загружаем список контентов
+    if (!_isThemeMode) {
+      Future.microtask(() => _loadContentList());
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Загружаем список контентов при открытии экрана, если уже в режиме "par contenu"
+    // Иначе загрузится при переключении через _toggleMode
   }
 
   void _addNew() {
@@ -50,6 +64,49 @@ class _MediaPlatformContentScreenState extends State<MediaPlatformContentScreen>
         // Пользователь может выбрать контент или добавить новое слово для конкретного контента
       },
     );
+    
+    // Если слово добавлено, обновляем список контентов
+    if (result == true && mounted && !_isThemeMode) {
+      _loadContentList();
+    }
+  }
+  
+  Future<void> _loadContentList() async {
+    if (!mounted) return;
+    
+    setState(() {
+      _isLoadingContent = true;
+    });
+    
+    try {
+      // Загружаем все слова для данной платформы и типа медиа
+      await context.read<VocabularyProvider>().fetchWords(
+        mediaType: widget.mediaType,
+        mediaPlatform: widget.platformName,
+      );
+      
+      // Извлекаем уникальные названия контентов из загруженных слов
+      final words = context.read<VocabularyProvider>().words;
+      final uniqueContents = words
+          .where((word) => word.mediaContentTitle != null && word.mediaContentTitle!.isNotEmpty)
+          .map((word) => word.mediaContentTitle!)
+          .toSet()
+          .toList()
+        ..sort();
+      
+      if (mounted) {
+        setState(() {
+          _contentList = uniqueContents;
+          _isLoadingContent = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingContent = false;
+        });
+      }
+    }
   }
 
   Future<void> _showAddThemeDialog() async {
@@ -360,49 +417,53 @@ class _MediaPlatformContentScreenState extends State<MediaPlatformContentScreen>
         
         // Список контента или пустое состояние
         Expanded(
-          child: _contentList.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.movie_creation_outlined,
-                        size: 80,
-                        color: Colors.grey.withOpacity(0.5),
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        'Aucun contenu ajouté',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
+          child: _isLoadingContent
+              ? const Center(
+                  child: CircularProgressIndicator(),
                 )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _contentList.length,
-                  itemBuilder: (context, index) {
-                    final content = _contentList[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: ListTile(
-                        leading: const Icon(Icons.movie, size: 32),
-                        title: Text(content, style: const TextStyle(fontWeight: FontWeight.w600)),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                        onTap: () {
-                          // Navigate to vocabulary screen for this content
-                          context.push(
-                            '/media-content-words/${Uri.encodeComponent(widget.mediaType)}/'
-                            '${Uri.encodeComponent(widget.platformName)}/'
-                            '${Uri.encodeComponent(content)}',
-                          );
-                        },
+              : _contentList.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.movie_creation_outlined,
+                            size: 80,
+                            color: Colors.grey.withOpacity(0.5),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'Aucun contenu ajouté',
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
                       ),
-                    );
-                  },
-                ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _contentList.length,
+                      itemBuilder: (context, index) {
+                        final content = _contentList[index];
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          child: ListTile(
+                            leading: const Icon(Icons.movie, size: 32),
+                            title: Text(content, style: const TextStyle(fontWeight: FontWeight.w600)),
+                            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                            onTap: () {
+                              // Navigate to vocabulary screen for this content
+                              context.push(
+                                '/media-content-words/${Uri.encodeComponent(widget.mediaType)}/'
+                                '${Uri.encodeComponent(widget.platformName)}/'
+                                '${Uri.encodeComponent(content)}',
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
         ),
       ],
     );
