@@ -116,11 +116,14 @@ class _AddWordScreenState extends State<AddWordScreen> {
       return;
     }
 
-    if (_selectedGalaxy == null || _selectedSubtopic == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez sélectionner une galaxie et un sous-thème')),
-      );
-      return;
+    // Проверяем galaxy/subtopic только если НЕ медиа-контент
+    if (widget.mediaContentTitle == null) {
+      if (_selectedGalaxy == null || _selectedSubtopic == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Veuillez sélectionner une galaxie et un sous-thème')),
+        );
+        return;
+      }
     }
 
     // Проверка: если нет перевода, показываем предупреждение
@@ -480,66 +483,103 @@ class _AddWordScreenState extends State<AddWordScreen> {
                     const SizedBox(height: 16),
                   ],
 
-                  // Galaxy selector
-                  DropdownButtonFormField<String>(
-                    value: _selectedGalaxy,
-                    decoration: InputDecoration(
-                      labelText: 'Galaxie',
-                      prefixIcon: const Icon(Icons.category),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    items: galaxiesData.map((galaxy) {
-                      return DropdownMenuItem(
-                        value: galaxy.name,
-                        child: Text('${galaxy.icon} ${galaxy.name}'),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedGalaxy = value;
-                        _selectedSubtopic = null; // Reset subtopic
-                      });
-                    },
-                    validator: (value) {
-                      if (value == null) {
-                        return 'Veuillez sélectionner une galaxie';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Subtopic selector
-                  if (_selectedGalaxy != null)
+                  // Galaxy selector (только для контекста жизни, не для медиа)
+                  if (widget.mediaContentTitle == null) ...[
                     DropdownButtonFormField<String>(
-                      value: _selectedSubtopic,
+                      value: _selectedGalaxy,
                       decoration: InputDecoration(
-                        labelText: 'Sous-thème',
-                        prefixIcon: const Icon(Icons.label),
+                        labelText: 'Galaxie',
+                        prefixIcon: const Icon(Icons.category),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      items: _getSubtopics().map((subtopic) {
+                      items: galaxiesData.map((galaxy) {
                         return DropdownMenuItem(
-                          value: subtopic.name,
-                          child: Text('${subtopic.icon} ${subtopic.name}'),
+                          value: galaxy.name,
+                          child: Text('${galaxy.icon} ${galaxy.name}'),
                         );
                       }).toList(),
                       onChanged: (value) {
                         setState(() {
-                          _selectedSubtopic = value;
+                          _selectedGalaxy = value;
+                          _selectedSubtopic = null; // Reset subtopic
                         });
                       },
                       validator: (value) {
                         if (value == null) {
-                          return 'Veuillez sélectionner un sous-thème';
+                          return 'Veuillez sélectionner une galaxie';
                         }
                         return null;
                       },
                     ),
+                    const SizedBox(height: 16),
+
+                    // Subtopic selector
+                    if (_selectedGalaxy != null)
+                      DropdownButtonFormField<String>(
+                        value: _selectedSubtopic,
+                        decoration: InputDecoration(
+                          labelText: 'Sous-thème',
+                          prefixIcon: const Icon(Icons.label),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        items: _getSubtopics().map((subtopic) {
+                          return DropdownMenuItem(
+                            value: subtopic.name,
+                            child: Text('${subtopic.icon} ${subtopic.name}'),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedSubtopic = value;
+                          });
+                        },
+                        validator: (value) {
+                          if (value == null) {
+                            return 'Veuillez sélectionner un sous-thème';
+                          }
+                          return null;
+                        },
+                      ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Информация о медиа-контенте (если это медиа)
+                  if (widget.mediaContentTitle != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.movie, color: Colors.blue),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Média',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue[700],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text('Type: ${widget.mediaType}'),
+                          Text('Plateforme: ${widget.mediaPlatform}'),
+                          Text('Contenu: ${widget.mediaContentTitle}'),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 32),
 
                   // Save/Update button

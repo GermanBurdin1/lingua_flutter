@@ -6,3 +6,7 @@ $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";"
 flutter run -d chrome
 
 
+
+
+
+

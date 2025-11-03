@@ -254,7 +254,7 @@ class ApiService {
   }) async {
     await loadTokens();
 
-    // Формируем данные в формате, который ожидает бэкенд (как в Angular)
+    // Формируем данные в формате, который ожидает бэкенд
     final Map<String, dynamic> body = {
       'word': word,
       'galaxy': galaxy,
@@ -268,7 +268,7 @@ class ApiService {
       'timestamp': timestamp,
     };
 
-    // Если есть перевод, добавляем массив translations (как в Angular)
+    // Если есть перевод, добавляем массив translations
     if (translation != null && translation.isNotEmpty) {
       body['translations'] = [
         {
@@ -284,8 +284,16 @@ class ApiService {
       ];
     }
 
+    // 📱 Используем специальный endpoint для мобильного приложения
+    final endpoint = mediaContentTitle != null
+        ? '$vocabularyBaseUrl/lexicon/mobile/add'
+        : '$vocabularyBaseUrl/lexicon';
+
+    print('📱 Adding word to endpoint: $endpoint');
+    print('📱 Body: ${json.encode(body)}');
+
     final response = await http.post(
-      Uri.parse('$vocabularyBaseUrl/lexicon'),
+      Uri.parse(endpoint),
       headers: _headers,
       body: json.encode(body),
     );
