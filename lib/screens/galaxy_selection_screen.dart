@@ -141,3 +141,4 @@ class _GalaxyCard extends StatelessWidget {
 
 
 
+
